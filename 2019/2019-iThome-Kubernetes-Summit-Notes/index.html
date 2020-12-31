@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-pohsien/favicon-32x32-pohsien.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-pohsien/favicon.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"pohsienshih.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":true}};
+  </script>
+<meta name="description" content="這次是第一次參加iThome Kubernetes Summit，當初看到早鳥票釋出就直接買了($2400左右)，以一天的Conference來說不算便宜，但是能夠去學習學習增廣見聞也是值得的。 結果買票之後才得知我們社群Cloud Native Taiwan User Group(CNTUG)也有去擺攤，雖然是付費票，但是還是去支援了一下社群攤位xD。 上午場都在跟附近社群交流、逛攤位以及顧社群">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iThome Kubernetes Summit 2019心得">
+<meta property="og:url" content="https://pohsienshih.github.io/2019/2019-iThome-Kubernetes-Summit-Notes/index.html">
+<meta property="og:site_name" content="Pohsien Workspace">
+<meta property="og:description" content="這次是第一次參加iThome Kubernetes Summit，當初看到早鳥票釋出就直接買了($2400左右)，以一天的Conference來說不算便宜，但是能夠去學習學習增廣見聞也是值得的。 結果買票之後才得知我們社群Cloud Native Taiwan User Group(CNTUG)也有去擺攤，雖然是付費票，但是還是去支援了一下社群攤位xD。 上午場都在跟附近社群交流、逛攤位以及顧社群">
+<meta property="og:locale">
+<meta property="og:image" content="https://i.imgur.com/AtBS9Xw.jpg">
+<meta property="og:image" content="https://i.imgur.com/kBoSZXs.jpg">
+<meta property="article:published_time" content="2019-09-16T13:11:58.000Z">
+<meta property="article:modified_time" content="2020-12-31T09:05:50.831Z">
+<meta property="article:author" content="Pohsien Shih">
+<meta property="article:tag" content="conference">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/AtBS9Xw.jpg">
+
+
+<link rel="canonical" href="https://pohsienshih.github.io/2019/2019-iThome-Kubernetes-Summit-Notes/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'default'
+  };
+</script>
+<title>iThome Kubernetes Summit 2019心得 | Pohsien Workspace</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-150934951-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-150934951-1');
+      }
+    </script>
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Pohsien Workspace</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Cloud Native, Network, Security, etc.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B3%A3-K8s-%E7%9A%84%E4%BA%BA%E4%B8%8D%E6%95%A2%E5%91%8A%E8%A8%B4%E4%BD%A0%E7%9A%84%E4%BA%8B"><span class="nav-number">1.</span> <span class="nav-text">賣 K8s 的人不敢告訴你的事</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E4%BB%BB%E4%BD%95%E4%BA%8B%E6%83%85%E4%B8%8D%E8%83%BD%E5%8F%AA%E7%9C%8B%E8%A1%A8%E9%9D%A2%EF%BC%8C%E8%A6%81%E4%BA%86%E8%A7%A3%E7%8F%BE%E5%AF%A6%E9%9D%A2%E3%80%82"><span class="nav-number">1.1.</span> <span class="nav-text">1. 任何事情不能只看表面，要了解現實面。</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%93%B4%E5%B1%95%E8%87%AA%E5%B7%B1%E7%9A%84%E7%9F%A5%E8%AD%98"><span class="nav-number">1.2.</span> <span class="nav-text">2. 擴展自己的知識</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-Dev%E8%B7%9FOps%E9%83%BD%E9%9C%80%E8%A6%81%E4%BA%86%E8%A7%A3"><span class="nav-number">1.3.</span> <span class="nav-text">3. Dev跟Ops都需要了解</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Docker-Swarm-%E5%A4%AA%E9%99%BD%E6%98%A5-K8s-%E5%A4%AA%E8%A4%87%E9%9B%9C%EF%BC%9F%E8%A9%A6%E8%A9%A6%E8%BC%95%E9%87%8F%E7%B4%9A%E7%9A%84-K3s-%E5%90%A7%EF%BC%81"><span class="nav-number">2.</span> <span class="nav-text">Docker Swarm 太陽春 K8s 太複雜？試試輕量級的 K3s 吧！</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Harden-Your-Kubernetes-Cluster"><span class="nav-number">3.</span> <span class="nav-text">Harden Your Kubernetes Cluster</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Image"><span class="nav-number">3.1.</span> <span class="nav-text">Image</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Credential"><span class="nav-number">3.2.</span> <span class="nav-text">Credential</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Network"><span class="nav-number">3.3.</span> <span class="nav-text">Network</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Runtime-pod%E5%BA%95%E5%B1%A4"><span class="nav-number">3.4.</span> <span class="nav-text">Runtime(pod底層)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Policy-as-Code"><span class="nav-number">3.5.</span> <span class="nav-text">Policy as Code</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E6%96%B9%E6%9C%89%E9%9B%B7%E5%88%A5%E5%86%8D%E8%B8%A9%E2%94%80%E4%BC%81%E6%A5%AD%E5%B0%8E%E5%85%A5-Kubernetes-%E7%9A%84%E6%8E%83%E9%9B%B7%E6%8C%87%E5%8D%97"><span class="nav-number">4.</span> <span class="nav-text">前方有雷別再踩─企業導入 Kubernetes 的掃雷指南</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B8%BD%E7%B5%90"><span class="nav-number">5.</span> <span class="nav-text">總結</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Pohsien Shih"
+      src="/images/pohsien.jpg">
+  <p class="site-author-name" itemprop="name">Pohsien Shih</p>
+  <div class="site-description" itemprop="description">System Engineer</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/pohsienshih" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;pohsienshih" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:pohsien324@gmail.com" title="E-Mail → mailto:pohsien324@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      相關連結
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://k2r2bai.com/" title="https:&#x2F;&#x2F;k2r2bai.com&#x2F;" rel="noopener" target="_blank">凱仁大大</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.hwchiu.com/" title="https:&#x2F;&#x2F;www.hwchiu.com&#x2F;" rel="noopener" target="_blank">邱牛大大</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.pichuang.com.tw/" title="https:&#x2F;&#x2F;blog.pichuang.com.tw&#x2F;" rel="noopener" target="_blank">小飛機</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.facebook.com/groups/cloudnative.tw/" title="https:&#x2F;&#x2F;www.facebook.com&#x2F;groups&#x2F;cloudnative.tw&#x2F;" rel="noopener" target="_blank">CNTUG</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://yylin1.github.io/" title="https:&#x2F;&#x2F;yylin1.github.io&#x2F;" rel="noopener" target="_blank">義洋</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://medium.com/@b02310043" title="https:&#x2F;&#x2F;medium.com&#x2F;@b02310043" rel="noopener" target="_blank">莫阿兆</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="default">
+    <link itemprop="mainEntityOfPage" href="https://pohsienshih.github.io/2019/2019-iThome-Kubernetes-Summit-Notes/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/pohsien.jpg">
+      <meta itemprop="name" content="Pohsien Shih">
+      <meta itemprop="description" content="System Engineer">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Pohsien Workspace">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          iThome Kubernetes Summit 2019心得
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-09-16 21:11:58" itemprop="dateCreated datePublished" datetime="2019-09-16T21:11:58+08:00">2019-09-16</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2020-12-31 17:05:50" itemprop="dateModified" datetime="2020-12-31T17:05:50+08:00">2020-12-31</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/kubernetes/" itemprop="url" rel="index"><span itemprop="name">kubernetes</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>這次是第一次參加iThome Kubernetes Summit，當初看到早鳥票釋出就直接買了($2400左右)，以一天的Conference來說不算便宜，但是能夠去學習學習增廣見聞也是值得的。</p>
+<p>結果買票之後才得知我們社群Cloud Native Taiwan User Group(CNTUG)也有去擺攤，雖然是付費票，但是還是去支援了一下社群攤位xD。</p>
+<p>上午場都在跟附近社群交流、逛攤位以及顧社群攤位，因此只聽了第一場「賣K8s 的人不敢告訴你的事」。下午花比較多的時間在聽議程，以下列出部分議程的簡單心得跟筆記。</p>
+<a id="more"></a>
+
+<p>目前官方已經有將簡報釋出，也有釋出當天大會各議程共筆，有興趣的人可以參考：</p>
+<p>議程: <a target="_blank" rel="noopener" href="https://summit.ithome.com.tw/kubernetes/">https://summit.ithome.com.tw/kubernetes/</a><br>大會共筆: <a target="_blank" rel="noopener" href="https://hackmd.io/@k8ssummit/19/%2FRe80SUVITjWAMbUwaUVnWw">https://hackmd.io/@k8ssummit/19/%2FRe80SUVITjWAMbUwaUVnWw</a></p>
+<h2 id="賣-K8s-的人不敢告訴你的事"><a href="#賣-K8s-的人不敢告訴你的事" class="headerlink" title="賣 K8s 的人不敢告訴你的事"></a>賣 K8s 的人不敢告訴你的事</h2><p><strong>葉秉哲（William） / 新加坡商鈦坦科技 Technical Coach</strong><br><a target="_blank" rel="noopener" href="http://bit.ly/k8s-vendor-secrets">Slide</a></p>
+<p>這場議程大多比較偏向使用者在導入Kubernetes時需要思考的事，大部分賣K8s平台的廠商在協助導入Kubernetes的時候都只提到好處(好管理Container以及好Scale)，但是都沒有提到維運成本以及其他層面(Networking, Storage etc)。</p>
+<p>講者提到了在導入Kubernetes時，可以使用三種方式來更加了解及定位出自己的需求或目標：</p>
+<h3 id="1-任何事情不能只看表面，要了解現實面。"><a href="#1-任何事情不能只看表面，要了解現實面。" class="headerlink" title="1. 任何事情不能只看表面，要了解現實面。"></a>1. 任何事情不能只看表面，要了解現實面。</h3><p>使用5W1H(What,Where,When,Why,Who,How)分析法去了解事情，要深入的去了解事情，不能只單單看表面，講者這裡提到一些例子：</p>
+<p><a target="_blank" rel="noopener" href="https://kubernetes.io/">Kubernetes官方對Kubernetes的介紹</a>：OpenSource、Auto-Deployment、Containerized等等。這個時候可以去思考：</p>
+<ul>
+<li>OpenSource如果出問題，有哪個廠商可以support嘛？</li>
+<li>為什麼直到現在才有這種Auto-Deployment Container服務或著是跟現有的解決方案差別在哪？</li>
+<li>我們真的做好自動化的準備嗎？我們的Service真的準備好Auto-Deployment了嗎？</li>
+<li>為什麼會需要Containerized？</li>
+<li>Service Containerized之後穩定嗎？</li>
+<li>…</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://www.ithome.com.tw/voice/130643">iThome 遍地開花的K8s與容器應用文章</a>，裡面提到K8s、容器化、微服務、部署跟管理方便以及Hybrid Cloud Solution等等。這個時候可以去思考：</p>
+<ul>
+<li>為什麼需要微服務? 優缺點是什麼？</li>
+<li>什麼情況下會需要Hybrid Cloud Solution，以及為什麼以前沒有推這種Solution?</li>
+<li>…</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://github.blog/2017-08-16-kubernetes-at-github/">Kubernetes at GitHub</a>，GitHub在自家服務使用Kubernetes的成功案例，他們一開始先對<code>github.com</code>以及<code>api.github.com</code>導入Kubernetes，且第一階段先把stateless服務遷移到Kubernetes上。先選擇<code>github.com</code>以及<code>api.github.com</code>的原因是因為這兩個服務導入最艱難，只要這兩個導入成功的，其他的應該就比較沒問題。導入的工作主要是由是SRE、Platform以及Developer三個一起參與導入。看到這些可以去思考：</p>
+<ul>
+<li>為什麼導入要先以最艱難的服務導入？不是通常都會先用簡單或比較不重要的服務測試Kubernetes，然後再慢慢把重要的遷移上去嗎？GitHub這樣是有不同考量嗎？對我的企業而言哪種比較適合呢？</li>
+<li>為什麼會需要SRE、Platform以及Developer三種工程師一起參與？缺少任一個可以嗎？</li>
+<li>為何先挑選stateless服務做處理呢？</li>
+</ul>
+<h3 id="2-擴展自己的知識"><a href="#2-擴展自己的知識" class="headerlink" title="2. 擴展自己的知識"></a>2. 擴展自己的知識</h3><p>多擴展自己的知識，可以多看<a target="_blank" rel="noopener" href="https://landscape.cncf.io/">CNCF Cloud Native Interactive Landscape</a>，瞭解project的分類，並且定位自己目前需要達成的是哪些目標，多了解一些，不要冒然選廠商跟解決方案。</p>
+<p>另外也可以參考<a target="_blank" rel="noopener" href="https://github.com/cncf/trailmap">CNCF Trail Map</a>，裡面有提供十個階段來建議企業漸進式導入Cloud Native專案，可以詢問自己目前想要做的是哪一階段或是廠商提供的是哪一階段的服務？</p>
+<h3 id="3-Dev跟Ops都需要了解"><a href="#3-Dev跟Ops都需要了解" class="headerlink" title="3. Dev跟Ops都需要了解"></a>3. Dev跟Ops都需要了解</h3><p>要導入Kubernetes絕對不會只是Operation的事，Development也是相當重要的，善用各方面的知識，並且互相交流，才能夠降低導入Kubernetes的門檻。</p>
+<h2 id="Docker-Swarm-太陽春-K8s-太複雜？試試輕量級的-K3s-吧！"><a href="#Docker-Swarm-太陽春-K8s-太複雜？試試輕量級的-K3s-吧！" class="headerlink" title="Docker Swarm 太陽春 K8s 太複雜？試試輕量級的 K3s 吧！"></a>Docker Swarm 太陽春 K8s 太複雜？試試輕量級的 K3s 吧！</h2><p><strong>王偉任（Weithenn） / Micron Technology Senior System Engineer</strong></p>
+<p>這個議程主要是在介紹<a target="_blank" rel="noopener" href="https://k3s.io/">Rancher K3s</a>，提到K3s比起一般Kubernetes還要更加的輕量化及差異點(<code>SQLite</code>取代<code>etcd</code>,預設Container Runtime使用<code>containerd</code>)。由於他非常的輕量，因此很適合部署在如樹莓派這樣的IoT裝置上，且部署方式非常方便，也能夠整合Kubernetes預設的dashboard或是Rancher Dashboard來做管理。</p>
+<h2 id="Harden-Your-Kubernetes-Cluster"><a href="#Harden-Your-Kubernetes-Cluster" class="headerlink" title="Harden Your Kubernetes Cluster"></a>Harden Your Kubernetes Cluster</h2><p><strong>蔡宗城（smalltown） / Maicoin Senior Site Reliability Engineer</strong><br><a target="_blank" rel="noopener" href="https://www.slideshare.net/smalltown20110306/kubernetes-summit-2019?fbclid=IwAR11_q6pkSEmWNqv5c96n_poWUond5oe_e6CD4gTDF8vkHdkHxpO-ImuqhQ">slide</a></p>
+<p>此議程講者主要針對不同的層面來探討如何增強Kubernetes的安全性。講者提到了非常多實用的經驗跟工具，這裡有些部分沒有筆記到或是不清楚，建議可以直接看簡報比較詳細。</p>
+<h3 id="Image"><a href="#Image" class="headerlink" title="Image"></a>Image</h3><ol>
+<li>盡量使用Minimal Base Image，太大包的image可能會有不必要的套件，增加安全風險。</li>
+<li>限制執行Container的使用者身份，以免讓Container取得過大的權限。</li>
+<li>Image盡量不要使用<code>latest</code>版本，因為<code>latest</code>對應到的Image可能會一直變動。</li>
+<li>不要隨意相信Registry上的Image，因為你無法確保那真的是官方釋出的。</li>
+<li>可以使用簽章機制來識別官方釋出的Image，(可使用<code>Notary</code>)。</li>
+<li>Image不要儲存一些敏感資訊，盡量用一些Secret形式來取代。</li>
+<li>Use COPY instead of ADD</li>
+<li>可使用 Anchor, Clair, Trivy來對image做CVE掃描，找出Image淺在的漏洞。</li>
+<li>Regular Vulnerability Assessment -&gt; 評估跟分類掃瞄出來的漏洞</li>
+<li>DevSecOps -&gt; 把image security 整合CI/CD。</li>
+</ol>
+<h3 id="Credential"><a href="#Credential" class="headerlink" title="Credential"></a>Credential</h3><ol>
+<li>Kubernetes Secret放在Cluster裡不一定安全。</li>
+<li>HashiCorp Vault -&gt; 管理credentials 生命週期及儲存，支援Dynamic Credentials，可以整合public cloud或是DB。</li>
+<li>Credentials Lifecycle：不要把Credentials 存在Disk，可存在Memory，使用完就直接清掉，不要保存。</li>
+</ol>
+<h3 id="Network"><a href="#Network" class="headerlink" title="Network"></a>Network</h3><ol>
+<li>預設情況下，Pod之間是沒有隔離的，網路都是互通。</li>
+<li>Kubernetes Network Policy(須注意並不是每個CNI都有支援，slide裡連結有支援表可以參考)</li>
+<li>Pod跟Pod之間傳輸是明碼的，很容易會有MITM。</li>
+<li>Istio 裡面pod跟pod之間會有envoy proxy做傳輸，可以在這邊做手腳(Istio TLS)，將pod跟pod之間傳輸做加密。</li>
+<li>Istio with Kiali ( 可以視覺化pod之間pod traffic流量，也會顯示連線是否有加密。</li>
+</ol>
+<h3 id="Runtime-pod底層"><a href="#Runtime-pod底層" class="headerlink" title="Runtime(pod底層)"></a>Runtime(pod底層)</h3><p>分成兩個部分 Auditing &amp; Enforcement</p>
+<ol>
+<li>Enforcement -&gt; 強迫去做一些事情(pod security policy, aurmor)</li>
+<li>Falco -&gt; 限定使用者不能做什麼事，例如使用者想要exec到pod執行bash，動作就會被擋住，然後Falco會傳通知給administrator。</li>
+</ol>
+<h3 id="Policy-as-Code"><a href="#Policy-as-Code" class="headerlink" title="Policy as Code"></a>Policy as Code</h3><ol>
+<li>Open Policy Agent (Kubernetes Admission Control, HTTP API Authorization)</li>
+<li>OPA Flow，有點類似會有一個authorization/authentication server去對權限做管理，k8s在執行任何動作前都會去問authorization server來決定可不可以執行。</li>
+<li>需注意OPA不是使用yaml來撰寫，是自己的語法。</li>
+</ol>
+<h2 id="前方有雷別再踩─企業導入-Kubernetes-的掃雷指南"><a href="#前方有雷別再踩─企業導入-Kubernetes-的掃雷指南" class="headerlink" title="前方有雷別再踩─企業導入 Kubernetes 的掃雷指南"></a>前方有雷別再踩─企業導入 Kubernetes 的掃雷指南</h2><p><strong>朱培華 / 多奇數位創意系統工程師</strong></p>
+<p>此議程的講者整理了非常多的Kubernetes Best Practice，從update, scaling, secret管理到label應用、資源應用以及監控等等，非常多實用的內容，這部分因為一些原因沒有記錄太多筆記，不過講者的簡報相當詳細，因此建議可以直接參考簡報。</p>
+<h2 id="總結"><a href="#總結" class="headerlink" title="總結"></a>總結</h2><p>這裡筆者只列出一些議程筆記，其他比較偏安裝教學或是有些沒有筆記到的就沒有寫在這上面，有興趣者可以參考官方的共筆或是簡報。</p>
+<p>這次參加的感想是議程部分比較入門類，偏向經驗分享或是工具使用教學，很適合像筆者這樣的菜鳥新手去聽。攤位部分不多，大概只有幾家比較大的贊助商來擺攤，不過廠商贈品送的還蠻多的，另外這次很特別的是有來自國外的Dr.Brad Topol簽書會(書名<a target="_blank" rel="noopener" href="https://www.ibm.com/account/reg/us-en/signup?formid=urx-34925">Kubernetes in the Enterprise</a>)，只要用名片就可以換到一本原文簽名書，算是這次Conference中最佛心的活動。</p>
+<p>最後還是覺得票價不便宜，希望明年有機會能夠當講者，除了能累積經驗外，也能使用講者票參加，一舉數得。</p>
+<p><br><strong>Cloud Native Taiwan User Group攤位</strong></p>
+<p><img src="https://i.imgur.com/AtBS9Xw.jpg"></p>
+<p><strong><code>Kubernetes in the Enterprise</code>作者簽書會</strong><br><img src="https://i.imgur.com/kBoSZXs.jpg"></p>
+<div class="note info"><p>文章內容的轉載、重製、發佈，請註明出處: <a href="https://pohsienshih.github.io/">https://pohsienshih.github.io</a></p>
+</div>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/conference/" rel="tag"># conference</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/Enterprise-PKS-K8s-Node-Disk-Out-Of-Space/" rel="prev" title="針對Enterprise PKS環境的K8s Cluster Node硬碟空間不足測試及解法">
+                  <i class="fa fa-chevron-left"></i> 針對Enterprise PKS環境的K8s Cluster Node硬碟空間不足測試及解法
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/ELK-Filebeat-With-Log-Rotate/" rel="next" title="ELK Filebeat With Log Rotate">
+                  ELK Filebeat With Log Rotate <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Pohsien Shih</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

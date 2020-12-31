@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-pohsien/favicon-32x32-pohsien.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-pohsien/favicon.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"pohsienshih.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":true}};
+  </script>
+<meta name="description" content="這篇主要是測試Enterprise PKS佈出來的Kubernetes Node 上面的硬碟滿了會造成什麼影響以及要如何解決。其實這個問題應該跟一般Kubernetes環境差不多，只是目前有一些case緣故還是需要在Enterprise PKS環境下測試一下。因此特別針對這部分做測試。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="針對Enterprise PKS環境的K8s Cluster Node硬碟空間不足測試及解法">
+<meta property="og:url" content="https://pohsienshih.github.io/2019/Enterprise-PKS-K8s-Node-Disk-Out-Of-Space/index.html">
+<meta property="og:site_name" content="Pohsien Workspace">
+<meta property="og:description" content="這篇主要是測試Enterprise PKS佈出來的Kubernetes Node 上面的硬碟滿了會造成什麼影響以及要如何解決。其實這個問題應該跟一般Kubernetes環境差不多，只是目前有一些case緣故還是需要在Enterprise PKS環境下測試一下。因此特別針對這部分做測試。">
+<meta property="og:locale">
+<meta property="og:image" content="https://i.imgur.com/xqutNQH.png">
+<meta property="og:image" content="https://i.imgur.com/EPqrgxu.png">
+<meta property="og:image" content="https://i.imgur.com/4fwqOoO.png">
+<meta property="og:image" content="https://i.imgur.com/W40XIom.png">
+<meta property="og:image" content="https://i.imgur.com/YLrnyK7.png">
+<meta property="og:image" content="https://i.imgur.com/l1PCEZ3.png">
+<meta property="og:image" content="https://i.imgur.com/gZX51JK.png">
+<meta property="og:image" content="https://i.imgur.com/mlKfE1v.png">
+<meta property="og:image" content="https://i.imgur.com/a3vEKZ7.png">
+<meta property="og:image" content="https://i.imgur.com/euMfkss.png">
+<meta property="og:image" content="https://i.imgur.com/CQYZMUg.png">
+<meta property="og:image" content="https://i.imgur.com/75Kg9LL.png">
+<meta property="og:image" content="https://i.imgur.com/rsK2ejX.png">
+<meta property="og:image" content="https://i.imgur.com/LXvruwh.png">
+<meta property="og:image" content="https://i.imgur.com/VSiEQfY.png">
+<meta property="og:image" content="https://i.imgur.com/Tt4VPwq.png">
+<meta property="og:image" content="https://i.imgur.com/Iqi8IWj.png">
+<meta property="og:image" content="https://i.imgur.com/6HJdvMp.png">
+<meta property="og:image" content="https://i.imgur.com/yssRzzr.png">
+<meta property="og:image" content="https://i.imgur.com/hydxUJn.png">
+<meta property="og:image" content="https://i.imgur.com/j19gZsa.png">
+<meta property="og:image" content="https://i.imgur.com/LCP91iw.png">
+<meta property="og:image" content="https://i.imgur.com/RAIviCX.png">
+<meta property="og:image" content="https://i.imgur.com/oUw5Yi2.png">
+<meta property="og:image" content="https://i.imgur.com/dxXNQZy.png">
+<meta property="og:image" content="https://i.imgur.com/rxH2FnH.png">
+<meta property="og:image" content="https://i.imgur.com/jQ66VyK.png">
+<meta property="og:image" content="https://i.imgur.com/UcRfNFr.png">
+<meta property="article:published_time" content="2019-07-02T13:22:24.000Z">
+<meta property="article:modified_time" content="2020-12-31T09:05:50.829Z">
+<meta property="article:author" content="Pohsien Shih">
+<meta property="article:tag" content="pks">
+<meta property="article:tag" content="kubernetes">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/xqutNQH.png">
+
+
+<link rel="canonical" href="https://pohsienshih.github.io/2019/Enterprise-PKS-K8s-Node-Disk-Out-Of-Space/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'default'
+  };
+</script>
+<title>針對Enterprise PKS環境的K8s Cluster Node硬碟空間不足測試及解法 | Pohsien Workspace</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-150934951-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-150934951-1');
+      }
+    </script>
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Pohsien Workspace</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Cloud Native, Network, Security, etc.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Kubernetes-Node%E4%B8%8A%E7%9A%84disk%E7%A8%AE%E9%A1%9E"><span class="nav-number">1.</span> <span class="nav-text">Kubernetes Node上的disk種類</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%88%B0%E7%9A%84%E6%8C%87%E4%BB%A4"><span class="nav-number">2.</span> <span class="nav-text">使用到的指令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Node-System-Disk-sda"><span class="nav-number">3.</span> <span class="nav-text">Node System Disk(sda)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Agent-Packages-Disk-sdb"><span class="nav-number">4.</span> <span class="nav-text">Agent Packages Disk(sdb)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Persistent-Disk-sdc"><span class="nav-number">5.</span> <span class="nav-text">Persistent Disk(sdc)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%93%B4%E5%A4%A7Node-Disk%E5%A4%A7%E5%B0%8F"><span class="nav-number">6.</span> <span class="nav-text">擴大Node Disk大小</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#PCF-Ops-Manager%E8%AA%BF%E6%95%B4Plan%E8%A8%AD%E5%AE%9A"><span class="nav-number">6.1.</span> <span class="nav-text">PCF Ops Manager調整Plan設定</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BE%9EvCenter%E5%BC%B7%E5%88%B6%E8%AA%BF%E6%95%B4Node-Disk%E5%A4%A7%E5%B0%8F"><span class="nav-number">6.2.</span> <span class="nav-text">從vCenter強制調整Node Disk大小</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Summary"><span class="nav-number">7.</span> <span class="nav-text">Summary</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Reference"><span class="nav-number">7.0.1.</span> <span class="nav-text">Reference</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Pohsien Shih"
+      src="/images/pohsien.jpg">
+  <p class="site-author-name" itemprop="name">Pohsien Shih</p>
+  <div class="site-description" itemprop="description">System Engineer</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/pohsienshih" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;pohsienshih" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:pohsien324@gmail.com" title="E-Mail → mailto:pohsien324@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      相關連結
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://k2r2bai.com/" title="https:&#x2F;&#x2F;k2r2bai.com&#x2F;" rel="noopener" target="_blank">凱仁大大</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.hwchiu.com/" title="https:&#x2F;&#x2F;www.hwchiu.com&#x2F;" rel="noopener" target="_blank">邱牛大大</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.pichuang.com.tw/" title="https:&#x2F;&#x2F;blog.pichuang.com.tw&#x2F;" rel="noopener" target="_blank">小飛機</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.facebook.com/groups/cloudnative.tw/" title="https:&#x2F;&#x2F;www.facebook.com&#x2F;groups&#x2F;cloudnative.tw&#x2F;" rel="noopener" target="_blank">CNTUG</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://yylin1.github.io/" title="https:&#x2F;&#x2F;yylin1.github.io&#x2F;" rel="noopener" target="_blank">義洋</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://medium.com/@b02310043" title="https:&#x2F;&#x2F;medium.com&#x2F;@b02310043" rel="noopener" target="_blank">莫阿兆</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="default">
+    <link itemprop="mainEntityOfPage" href="https://pohsienshih.github.io/2019/Enterprise-PKS-K8s-Node-Disk-Out-Of-Space/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/pohsien.jpg">
+      <meta itemprop="name" content="Pohsien Shih">
+      <meta itemprop="description" content="System Engineer">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Pohsien Workspace">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          針對Enterprise PKS環境的K8s Cluster Node硬碟空間不足測試及解法
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-07-02 21:22:24" itemprop="dateCreated datePublished" datetime="2019-07-02T21:22:24+08:00">2019-07-02</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2020-12-31 17:05:50" itemprop="dateModified" datetime="2020-12-31T17:05:50+08:00">2020-12-31</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Pivotal-Container-Service/" itemprop="url" rel="index"><span itemprop="name">Pivotal Container Service</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>這篇主要是測試Enterprise PKS佈出來的<code>Kubernetes Node</code> 上面的硬碟滿了會造成什麼影響以及要如何解決。其實這個問題應該跟一般<code>Kubernetes</code>環境差不多，只是目前有一些case緣故還是需要在Enterprise PKS環境下測試一下。因此特別針對這部分做測試。</p>
+<a id="more"></a>
+<h2 id="Kubernetes-Node上的disk種類"><a href="#Kubernetes-Node上的disk種類" class="headerlink" title="Kubernetes Node上的disk種類"></a>Kubernetes Node上的disk種類</h2><p>在<strong>PCF Ops Manager Web GUI &gt; Enterprise PKS Tile &gt; Plan</strong>裡，可以設定Enterprise PKS部署出來的<code>Kubernetes Cluster</code>資源，其中有一些欄位是設定node VM的硬碟資訊:</p>
+<p><img src="https://i.imgur.com/xqutNQH.png"></p>
+<p>預設<code>BOSH</code>產生出來的node上面會有三顆虛擬硬碟。這裡我們用<code>sda</code>,<code>sdb</code>,<code>sdc</code>來代稱。</p>
+<ol>
+<li><code>sda</code>: Node System Disk，掛載目錄為<code>/</code>，為node VM作業系統的根目錄，這個大小目前是不能設定的，預設3GB。</li>
+<li><code>sdb</code>: Agent Package Disk，掛載目錄為<code>/var/vcap/data...</code>，為存放<code>pks-system</code>以及<code>bosh agent</code>這些必要套件的位置，這個就是<code>PCF Ops Manager</code>上設定的<code>VM Type</code>裡面的disk大小。</li>
+<li><code>sdc</code>: Persistent Disk，掛載目錄<code>/var/vcap/store/...</code>，這個disk在master中是用來存<code>etcd</code>的，因此只要disk沒有掛掉，不管<code>BOSH</code>怎麼修復master，<code>etcd</code>資料都不會消失。如果是worker的話，這個disk是用來存<code>docker container</code> 以及<code>docker image</code>。<code>sdc</code>大小是根據<code>PCF Ops Manager</code>裡面設定的<code>Persistent Disk Type</code>來配置。</li>
+</ol>
+<div class="note warning"><p>當node發生錯誤而啟動<code>BOSH</code>自動修復機制時，只有<code>sdc</code>資料會被保留，其他的都會被清空還原成初始狀態。</p>
+</div>
+<div class="note info"><p>上面disk名稱只是方便識別，並非官方取名。</p>
+</div>
+<p><img src="https://i.imgur.com/EPqrgxu.png"></p>
+<p>由於disk裡的資料可能會隨著時間成長，例如:log, <code>docker image/containe</code>或是一些暫存檔等等。為了確定清楚硬碟塞爆是否會影響<code>Kubernetes</code>服務，因此接下來會測試塞爆三種disk並觀察會發生的情況。</p>
+<h2 id="使用到的指令"><a href="#使用到的指令" class="headerlink" title="使用到的指令"></a>使用到的指令</h2><p><strong>建立任意大小的檔案</strong></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ fallocate -l &lt;檔案大小&gt; &lt;檔案名稱&gt;</span><br><span class="line"></span><br><span class="line">Example:</span><br><span class="line">$ fallocate -l 50G test</span><br></pre></td></tr></table></figure>
+<p><strong>查看目錄屬於哪顆disk、大小及使用率</strong></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ df &lt;目錄&gt; -h</span><br><span class="line"></span><br><span class="line">Example:</span><br><span class="line">$ df &#x2F;var&#x2F;vcap&#x2F; -h</span><br></pre></td></tr></table></figure>
+<p><strong>查看目錄或檔案大小</strong></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ du -sh &lt;檔案名稱&#x2F;目錄&gt;</span><br><span class="line"></span><br><span class="line">Example:</span><br><span class="line">$ du -sh &#x2F;var&#x2F;vcap&#x2F;</span><br></pre></td></tr></table></figure>
+<p><strong>查看<code>docker</code>根目錄</strong></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ docker system info</span><br></pre></td></tr></table></figure>
+<p><strong>查看<code>docker image/container</code>數量/大小資訊</strong></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ docker system df</span><br></pre></td></tr></table></figure>
+<h2 id="Node-System-Disk-sda"><a href="#Node-System-Disk-sda" class="headerlink" title="Node System Disk(sda)"></a>Node System Disk(<code>sda</code>)</h2><p><strong>測試環境:</strong></p>
+<ul>
+<li>1台master, 2台worker</li>
+</ul>
+<p><strong>測試結果</strong></p>
+<ol>
+<li>Container不會掛掉，正常運行。</li>
+<li><code>BOSH</code> ssh到worker的時候會顯示<code>no space left on device</code>錯誤。</li>
+<li>修復方式<ul>
+<li>關閉壞掉的node讓<code>BOSH</code>自動修復，產生新的node VM。</li>
+<li>如果還能登入node，可以清掉一些資料釋出Node System Disk(<code>sda</code>)空間。</li>
+</ul>
+</li>
+</ol>
+<p><strong>測試流程</strong></p>
+<ol>
+<li><p>使用<code>kubectl</code>建立deployment到cluster上。</p>
+<p> <img src="https://i.imgur.com/4fwqOoO.png"></p>
+</li>
+<li><p>連到worker VM裡並塞滿<code>sda</code>空間</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># SSH</span><br><span class="line">bosh -d &lt;deployment&gt; ssh &lt;worker&gt;</span><br><span class="line"></span><br><span class="line"># 切換到&#x2F;dev&#x2F;sda1掛載目錄</span><br><span class="line">cd &#x2F;var</span><br><span class="line"></span><br><span class="line"># 塞滿空間</span><br><span class="line">fallocate -l 10G test</span><br></pre></td></tr></table></figure></li>
+<li><p>Container依然正常運行無異常，但是當執行<code>bosh ssh</code>時出現下圖空間不足錯誤。</p>
+<p> <img src="https://i.imgur.com/W40XIom.png"></p>
+</li>
+</ol>
+<h2 id="Agent-Packages-Disk-sdb"><a href="#Agent-Packages-Disk-sdb" class="headerlink" title="Agent Packages Disk(sdb)"></a>Agent Packages Disk(<code>sdb</code>)</h2><p><strong>測試環境:</strong></p>
+<ul>
+<li>1台master, 2台worker</li>
+</ul>
+<p><strong>測試結果</strong></p>
+<ol>
+<li>Node會掛掉，無法負荷原本的container，因此原本上面跑的container都會變成<code>Evicted</code>狀態。(可能會造成服務中斷)</li>
+<li>如果有額外的node可用，master會佈新的container到別台node上。如果沒有，所有container都會變成<code>Pending</code>狀態。</li>
+<li>修復方式:<ul>
+<li>清出Agent Packages Disk空間，然後執行<code>monit restart all</code>，這樣node就會恢復正常。</li>
+</ul>
+</li>
+</ol>
+<p><strong>測試流程</strong></p>
+<ol>
+<li><p>使用<code>kubectl</code>建立deployment到cluster上。</p>
+<p> <img src="https://i.imgur.com/YLrnyK7.png"></p>
+</li>
+<li><p>連到worker VM(<code>b685858b...</code>)裡並塞滿<code>sdb</code>空間</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># SSH</span><br><span class="line">bosh -d &lt;deployment&gt; ssh &lt;worker&gt;</span><br><span class="line"></span><br><span class="line"># 切換到&#x2F;dev&#x2F;sdb2掛載目錄</span><br><span class="line">cd &#x2F;var&#x2F;vcap&#x2F;data&#x2F;</span><br><span class="line"></span><br><span class="line"># 塞滿空間</span><br><span class="line">fallocate -l 10G test</span><br></pre></td></tr></table></figure></li>
+<li><p>使用<code>kubectl</code>查看pods狀態，可以看到剛剛被塞爆的worker(<code>b685858b...</code>)上的pods都進入<code>Evicted</code>狀態，且master在其他node產生新的pods。</p>
+<p> <img src="https://i.imgur.com/l1PCEZ3.png"></p>
+</li>
+<li><p>使用<code>kubectl describe pods &lt;pod name&gt;</code>查看<code>Evicted</code> pod，可以看到是因為node空間不足導致的。</p>
+<p> <img src="https://i.imgur.com/gZX51JK.png"></p>
+</li>
+</ol>
+<h2 id="Persistent-Disk-sdc"><a href="#Persistent-Disk-sdc" class="headerlink" title="Persistent Disk(sdc)"></a>Persistent Disk(<code>sdc</code>)</h2><p><strong>測試環境:</strong></p>
+<ul>
+<li>1台master, 2台worker</li>
+</ul>
+<p><strong>測試結果</strong></p>
+<div class="note info"><p>與Agent Packages Disk(<code>sdb</code>)結果相同</p>
+</div>
+<ol>
+<li>Node會掛掉，無法負荷原本的container，因此原本上面跑的container都會變成<code>Evicted</code>狀態。(可能會造成服務中斷)</li>
+<li>如果有額外的node可用，master會佈新的container到別台node上。如果沒有，所有container都會變成<code>Pending</code>狀態。</li>
+<li>修復方式:<ul>
+<li>清出persistent disk空間，然後在node上執行<code>monit restart all</code>指令，這樣node就會恢復正常。</li>
+</ul>
+</li>
+</ol>
+<p><strong>測試流程</strong></p>
+<ol>
+<li><p>使用<code>kubectl</code>建立deployment到cluster上。</p>
+<p> <img src="https://i.imgur.com/mlKfE1v.png"></p>
+</li>
+</ol>
+<ol start="2">
+<li><p>連到worker VM(<code>3f28d443...</code>)裡並塞滿<code>sdb</code>空間</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># SSH</span><br><span class="line">bosh -d &lt;deployment&gt; ssh &lt;worker&gt;</span><br><span class="line"></span><br><span class="line"># 切換到&#x2F;dev&#x2F;sdc1掛載目錄</span><br><span class="line">cd &#x2F;var&#x2F;vcap&#x2F;store&#x2F;docker</span><br><span class="line"></span><br><span class="line"># 塞滿空間</span><br><span class="line">fallocate -l 50G test</span><br></pre></td></tr></table></figure></li>
+<li><p>使用<code>kubectl</code>查看pods狀態，可以看到剛剛被塞爆的worker(<code>3f28d443...</code>)上的pods都進入<code>Evicted</code>狀態，且master在其他node產生新的pods。</p>
+<p> <img src="https://i.imgur.com/a3vEKZ7.png"></p>
+</li>
+</ol>
+<h2 id="擴大Node-Disk大小"><a href="#擴大Node-Disk大小" class="headerlink" title="擴大Node Disk大小"></a>擴大Node Disk大小</h2><p>看到上述測試可以得知disk如果滿了是有可能會影響服務，解決方法除了清掉不必要的檔案釋出空間之外，也可以選擇擴大原有的空間，但目前能擴大的只有<code>sdb</code>以及<code>sdc</code>。</p>
+<p>官方提供的擴大方式是到<code>PCF Ops Manager</code>去調原plan設定，例如把disk調大資源調多等等, 然後<code>apply change</code>的時候勾選<code>upgrade all cluster</code>, 這樣原有的cluster就會套用新的設定(cpu/memory/persistent disk…)，但只能修改原plan數值, 無法修改成不同plan(例如從plan1改成plan2)。詳情可參考<a target="_blank" rel="noopener" href="https://community.pivotal.io/s/question/0D50e00005j9wr2/pks-plan-resizing">連結</a> ，另外此方法的缺點是要改的話，全部同樣使用該plan的cluster都會一併修改。</p>
+<p>除了官方解法外，筆者我想到另外一種比較暴力的方法是直接在vCenter把node的硬碟擴大, 但是實際測試這種方式會導致<code>BOSH</code>那邊不同步引發錯誤，因此目前這是不可行的。</p>
+<p>以下是兩種方法的測試流程:</p>
+<h3 id="PCF-Ops-Manager調整Plan設定"><a href="#PCF-Ops-Manager調整Plan設定" class="headerlink" title="PCF Ops Manager調整Plan設定"></a>PCF Ops Manager調整Plan設定</h3><ol>
+<li><p>假設目前worker VM (<code>91997fd5...</code>) persistent disk已經被塞爆(預設50G)，希望能擴大空間。</p>
+<p> <img src="https://i.imgur.com/euMfkss.png"></p>
+</li>
+</ol>
+<ol start="2">
+<li><p>到<strong>PCF Ops Manager Web GUI &gt; Enterprise PKS Tile &gt; Plan</strong>將worker的persistent disk調整成75G。</p>
+<p> <img src="https://i.imgur.com/CQYZMUg.png"></p>
+</li>
+<li><p>Apply Change</p>
+<p> <img src="https://i.imgur.com/75Kg9LL.png"></p>
+</li>
+<li><p>完成後連到worker VM(<code>91997fd5...</code>)去看，可以看到空間已經成功擴大。</p>
+<p> <img src="https://i.imgur.com/rsK2ejX.png"></p>
+<p> <img src="https://i.imgur.com/LXvruwh.png"></p>
+</li>
+<li><p>Pod也可以正常的部署在worker VM (<code>91997fd5...</code>)上了。</p>
+<p> <img src="https://i.imgur.com/VSiEQfY.png"></p>
+</li>
+</ol>
+<h3 id="從vCenter強制調整Node-Disk大小"><a href="#從vCenter強制調整Node-Disk大小" class="headerlink" title="從vCenter強制調整Node Disk大小"></a>從vCenter強制調整Node Disk大小</h3><blockquote>
+<p>注意這種方式會導致<code>BOSH</code>那邊不同步引發錯誤，因此目前此方法是不可行的，但還是將過程列出來供參考。</p>
+</blockquote>
+<ol>
+<li><p>假設目前worker VM (<code>3f28d443...</code>) persistent disk已經被塞爆(預設50G)，希望能擴大空間。</p>
+<p> <img src="https://i.imgur.com/Tt4VPwq.png"></p>
+</li>
+<li><p>到vCenter上直接去將worker VM persistent disk調整為80G。</p>
+<p> <img src="https://i.imgur.com/Iqi8IWj.png"></p>
+<p> <img src="https://i.imgur.com/6HJdvMp.png"></p>
+</li>
+<li><p>接下來為了避免<code>BOSH</code>將這台worker砍掉，因此要先關閉自動修復機制。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ bosh -d &lt;deployment&gt; update-resurrection  off</span><br></pre></td></tr></table></figure>
+<p> <img src="https://i.imgur.com/yssRzzr.png"></p>
+</li>
+<li><p>接下來將worker VM(<code>3f28d443...</code>)關機。</p>
+<p> <img src="https://i.imgur.com/hydxUJn.png"></p>
+</li>
+<li><p>可以從<code>bosh vms</code>看到該台worker1 已經變成<code>unresponsive agent</code>狀態，但是<code>BOSH</code>不會將它砍掉。</p>
+<p> <img src="https://i.imgur.com/j19gZsa.png"></p>
+</li>
+<li><p>接下來到<strong>vCenter &gt; Datastore &gt; pcf_disks</strong>找到worker VM(<code>3f28d443...</code>)的persistent disk，並擴大它的空間。</p>
+<p> 先找出worker1對應的persistent disk(<code>Disk CIDs</code>)</p>
+ <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ bosh instances -i</span><br></pre></td></tr></table></figure>
+<p> <img src="https://i.imgur.com/LCP91iw.png"></p>
+<p> 到<strong>vCenter &gt; Datastore &gt; pcf_disks</strong>找到對應的disk，可以發現disk還是50G。</p>
+<p> <img src="https://i.imgur.com/RAIviCX.png"></p>
+<p> 點擊<code>inflate</code>來擴大硬碟。(這個動作會跑一段時間)</p>
+<p> <img src="https://i.imgur.com/oUw5Yi2.png"></p>
+<p> 好了之後可以看到disk已經變80G。</p>
+<p> <img src="https://i.imgur.com/dxXNQZy.png"></p>
+</li>
+<li><p>接下來將worker1開機，但是開好之後還是<code>unresponsive agent</code>。</p>
+<p> <img src="https://i.imgur.com/rxH2FnH.png"></p>
+</li>
+<li><p>不得已情況下只好將自動修復開起來，看看<code>BOSH</code>會不會砍掉建立新的worker，然後將persistent disk掛載上去。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ bosh -d &lt;deployment&gt; update-resurrection  on</span><br></pre></td></tr></table></figure>
+<p> <img src="https://i.imgur.com/jQ66VyK.png"></p>
+</li>
+<li><p><code>BOSH</code>開始修復，但是修復到最後失敗，硬碟無法掛載，可能是因為disk裡的partition有變動到。到這裡就卡住了，BOSH就無法修復了，也許是某一步做錯或是<code>BOSH</code>本身不支援這種改法，後續如果有成功再來更新此篇，目前暫不將此方法列入解法。</p>
+<p> <img src="https://i.imgur.com/UcRfNFr.png"></p>
+</li>
+</ol>
+<h2 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h2><p>測試下來的感覺好像跟是不是Enterprise PKS環境沒啥關係xD。不過經過此測試也比較清楚Enterprise PKS運行機制以及針對這種情況的處理方式，但對目前的Enterprise PKS來說，擴大硬碟的機制還是很不彈性，這有可能是受到<code>BOSH</code>的限制，希望未來能夠再加強這部分。</p>
+<h4 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h4><ol>
+<li>PKS Plan Resizing - <a target="_blank" rel="noopener" href="https://community.pivotal.io/s/question/0D50e00005j9wr2/pks-plan-resizing">https://community.pivotal.io/s/question/0D50e00005j9wr2/pks-plan-resizing</a></li>
+<li>Changing the thick or thin provisioning of a virtual disk - <a target="_blank" rel="noopener" href="https://kb.vmware.com/s/article/2014832">https://kb.vmware.com/s/article/2014832</a></li>
+</ol>
+<div class="note info"><p>文章內容的轉載、重製、發佈，請註明出處: <a href="https://pohsienshih.github.io/">https://pohsienshih.github.io</a></p>
+</div>
+
+
+
+
+
+
+
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/pks/" rel="tag"># pks</a>
+              <a href="/tags/kubernetes/" rel="tag"># kubernetes</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/Enterprise-PKS-Introduction/" rel="prev" title="Enterprise PKS介紹">
+                  <i class="fa fa-chevron-left"></i> Enterprise PKS介紹
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/2019-iThome-Kubernetes-Summit-Notes/" rel="next" title="iThome Kubernetes Summit 2019心得">
+                  iThome Kubernetes Summit 2019心得 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Pohsien Shih</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

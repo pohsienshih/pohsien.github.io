@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-pohsien/favicon-32x32-pohsien.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-pohsien/favicon.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"pohsienshih.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":true}};
+  </script>
+<meta name="description" content="PKS全名是Pivotal Container Service，顧名思義是由Pivotal這間公司開發的。Pivotal是VMware的子公司，也許比較少人知道這間公司，不過相信大家應該都聽過tomcat或是redis，這兩個知名的專案就是由Pivotal開發的，由此可知Pivotal也是一家技術非常扎實強大的公司。 PKS介紹PKS是用來管理&#x2F;部署Kubernetes Cluster的一個平台，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Enterprise PKS介紹">
+<meta property="og:url" content="https://pohsienshih.github.io/2019/Enterprise-PKS-Introduction/index.html">
+<meta property="og:site_name" content="Pohsien Workspace">
+<meta property="og:description" content="PKS全名是Pivotal Container Service，顧名思義是由Pivotal這間公司開發的。Pivotal是VMware的子公司，也許比較少人知道這間公司，不過相信大家應該都聽過tomcat或是redis，這兩個知名的專案就是由Pivotal開發的，由此可知Pivotal也是一家技術非常扎實強大的公司。 PKS介紹PKS是用來管理&#x2F;部署Kubernetes Cluster的一個平台，">
+<meta property="og:locale">
+<meta property="og:image" content="https://i.imgur.com/m7tpIuS.png">
+<meta property="og:image" content="https://i.imgur.com/67npxZO.png">
+<meta property="og:image" content="https://i.imgur.com/sp81Dfu.png">
+<meta property="og:image" content="https://i.imgur.com/Xoa6IOf.png">
+<meta property="og:image" content="https://i.imgur.com/cTl41il.png">
+<meta property="og:image" content="https://i.imgur.com/gF2wCXN.jpg">
+<meta property="og:image" content="https://i.imgur.com/rYupFf7.png">
+<meta property="article:published_time" content="2019-06-27T16:06:57.000Z">
+<meta property="article:modified_time" content="2020-12-31T09:05:50.828Z">
+<meta property="article:author" content="Pohsien Shih">
+<meta property="article:tag" content="pks">
+<meta property="article:tag" content="kubernetes">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/m7tpIuS.png">
+
+
+<link rel="canonical" href="https://pohsienshih.github.io/2019/Enterprise-PKS-Introduction/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'default'
+  };
+</script>
+<title>Enterprise PKS介紹 | Pohsien Workspace</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-150934951-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-150934951-1');
+      }
+    </script>
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Pohsien Workspace</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Cloud Native, Network, Security, etc.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#PKS%E4%BB%8B%E7%B4%B9"><span class="nav-number">1.</span> <span class="nav-text">PKS介紹</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PKS%E6%9E%B6%E6%A7%8B%E7%B5%84%E6%88%90"><span class="nav-number">2.</span> <span class="nav-text">PKS架構組成</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Enterprise-PKS"><span class="nav-number">2.1.</span> <span class="nav-text">Enterprise PKS</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%9D"><span class="nav-number">3.</span> <span class="nav-text">安裝</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PKS%E6%94%AF%E6%8F%B4Cluster-%E7%89%88%E6%9C%AC"><span class="nav-number">4.</span> <span class="nav-text">PKS支援Cluster 版本</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%83%E8%80%83%E8%B3%87%E6%96%99"><span class="nav-number">4.0.1.</span> <span class="nav-text">參考資料</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Pohsien Shih"
+      src="/images/pohsien.jpg">
+  <p class="site-author-name" itemprop="name">Pohsien Shih</p>
+  <div class="site-description" itemprop="description">System Engineer</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/pohsienshih" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;pohsienshih" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:pohsien324@gmail.com" title="E-Mail → mailto:pohsien324@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      相關連結
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://k2r2bai.com/" title="https:&#x2F;&#x2F;k2r2bai.com&#x2F;" rel="noopener" target="_blank">凱仁大大</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.hwchiu.com/" title="https:&#x2F;&#x2F;www.hwchiu.com&#x2F;" rel="noopener" target="_blank">邱牛大大</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.pichuang.com.tw/" title="https:&#x2F;&#x2F;blog.pichuang.com.tw&#x2F;" rel="noopener" target="_blank">小飛機</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.facebook.com/groups/cloudnative.tw/" title="https:&#x2F;&#x2F;www.facebook.com&#x2F;groups&#x2F;cloudnative.tw&#x2F;" rel="noopener" target="_blank">CNTUG</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://yylin1.github.io/" title="https:&#x2F;&#x2F;yylin1.github.io&#x2F;" rel="noopener" target="_blank">義洋</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://medium.com/@b02310043" title="https:&#x2F;&#x2F;medium.com&#x2F;@b02310043" rel="noopener" target="_blank">莫阿兆</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="default">
+    <link itemprop="mainEntityOfPage" href="https://pohsienshih.github.io/2019/Enterprise-PKS-Introduction/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/pohsien.jpg">
+      <meta itemprop="name" content="Pohsien Shih">
+      <meta itemprop="description" content="System Engineer">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Pohsien Workspace">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Enterprise PKS介紹
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-06-28 00:06:57" itemprop="dateCreated datePublished" datetime="2019-06-28T00:06:57+08:00">2019-06-28</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2020-12-31 17:05:50" itemprop="dateModified" datetime="2020-12-31T17:05:50+08:00">2020-12-31</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Pivotal-Container-Service/" itemprop="url" rel="index"><span itemprop="name">Pivotal Container Service</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p><code>PKS</code>全名是<code>Pivotal Container Service</code>，顧名思義是由Pivotal這間公司開發的。Pivotal是VMware的子公司，也許比較少人知道這間公司，不過相信大家應該都聽過<code>tomcat</code>或是<code>redis</code>，這兩個知名的專案就是由Pivotal開發的，由此可知Pivotal也是一家技術非常扎實強大的公司。</p>
+<h2 id="PKS介紹"><a href="#PKS介紹" class="headerlink" title="PKS介紹"></a>PKS介紹</h2><p><code>PKS</code>是用來管理/部署<code>Kubernetes Cluster</code>的一個平台，由於目前<code>Kubernetes</code>在建置或維運上還是需要蠻高的成本及技術門檻，為了要降低維運成本，讓企業能完全專注在自己的服務上，因此才漸漸開始有了這類管理/部署<code>Kubernetes</code>的平台出現。透過這種平台能夠輕鬆的部署<code>Kubernetes Cluster</code>，有些平台甚至還針對<code>Kubernetes Cluster</code>提供HA、Fault Tolerance或是Load Balancing的機制，大大降低維運成本，而PKS就是其中一種這種平台(產品)，類似的其他產品還有<a target="_blank" rel="noopener" href="https://rancher.com/">Rancher</a>、<a target="_blank" rel="noopener" href="https://www.openshift.com/">Redhat OpenShift</a>以及<a target="_blank" rel="noopener" href="https://www.ibm.com/tw-zh/cloud/private">IBM Cloud Private</a>等。</p>
+<a id="more"></a>
+<p>目前Pivotal有三種不同的PKS產品：</p>
+<ol>
+<li><code>VMware Enterprise PKS</code></li>
+<li><code>VMware Essential PKS</code></li>
+<li><code>VMware Cloud PKS</code></li>
+</ol>
+<p><code>VMware Enterprise PKS</code>，目前為<code>1.4.1</code>版，在<code>1.4.0</code>以前名稱還叫做<code>PKS</code>而已，可能是因為要跟其他產品區分開來因而改名，這個產品架構主要是由Cloud Foundry開發的<a target="_blank" rel="noopener" href="https://www.bosh.io/docs/">BOSH</a>專案以及Pivotal各式產品組成，目前支援的平台為<code>vSphere</code>,<code>GCP</code>,<code>Azure</code>以及<code>AWS</code>，本篇會以<code>Enterprise PKS</code>介紹為主，稍後會有較詳細的架構介紹。</p>
+<p><code>VMware Essential PKS</code>是今年2019年3月VMware出的一種新的<code>PKS</code>版本，這個版本比較特殊一點，主要是<a target="_blank" rel="noopener" href="https://heptio.com/">heptio</a>公司(已被VMware買下來)開發的，因此他的架構主要都是由heptio所提供的Open Source套件組合而成的，例如用來備份<code>Kubernetes</code>的<a target="_blank" rel="noopener" href="https://github.com/heptio/velero">velero</a>、或是作為proxy的<a target="_blank" rel="noopener" href="https://github.com/heptio/contour">contour</a>等等。這個產品目前筆者也搞不清楚定位在哪，感覺與Pivotal開發的<code>Enterprise PKS</code>有較勁意味(Pivotal官方文件也完全沒有提到這個產品，都只有在VMware網站才有xD)，不過目前關於這產品的資訊還太少，也許過一段時間就會知道定位跟差異了。</p>
+<p><code>Cloud PKS</code>是VMware提供的一個Public Cloud <code>Kubernetes</code>環境，是一個<code>SaaS</code>平台，使用者可以直接將<code>Container</code>部署上去，完全不需要維護<code>Kubernetes</code>環境，詳細資訊可以參考<a target="_blank" rel="noopener" href="https://cloud.vmware.com/vmware-cloud-pks">連結</a>。</p>
+<h2 id="PKS架構組成"><a href="#PKS架構組成" class="headerlink" title="PKS架構組成"></a>PKS架構組成</h2><p><img src="https://i.imgur.com/m7tpIuS.png"></p>
+<p>圖片為簡略的<code>Enterprise PKS</code>架構圖，由於Pivotal是VMware的子公司，因此目前<code>Enterprise PKS</code>對vSphere環境相容性最好，尤其是結合<code>VMwaer NSX-T</code>能夠完全發揮出<code>Enterprise PKS</code>功能。不過不管是運行在哪個平台，<code>Enterprise PKS</code>元件都會以VM的形式運行，因此是不會與平台中其他一般VM相衝突的。</p>
+<h3 id="Enterprise-PKS"><a href="#Enterprise-PKS" class="headerlink" title="Enterprise PKS"></a>Enterprise PKS</h3><p><strong>1. PCF Ops Manager</strong><br>這是Pivotal的一個產品，主要是提供一個GUI平台讓使用者可以直接上傳Pivotal系列產品來進行部署。<code>Enterprise PKS</code>也是透過這種方式安裝。Pivotal的產品是用<code>Tile</code>為單位(<code>.pivotal檔</code>)，只需要先將<code>Tile</code>上傳到Ops Manager，再手動設定一些參數(IP,密碼等等)，就可以直接按下變更鈕部署，非常方便。如果要刪掉產品也只要先按<code>Tile</code>旁邊的垃圾桶，再案變更鈕即可。</p>
+<p>如下圖所示，<code>PCF Ops Manager</code>上面有三個<code>Tile</code>，分別是<code>BOSH Tile</code>,<code>PKS Tile</code>以及<code>Harbor Tile</code>。<br><img src="https://i.imgur.com/67npxZO.png"></p>
+<p><code>PCF Ops Manager</code>只是一個<code>Tile</code>管控介面，它一定要結合<code>BOSH</code>(下一點會提到)才能部署，所以實際上當使用者按下變更鈕之後應該是<code>Ops Manager</code>會呼叫<code>BOSH Director</code>去根據設定的參數部署這些<code>Tile</code>。</p>
+<div class="note info"><p>Pivotal官網有釋出許多它們包好的<code>Tile</code>，不過大部分都是他們自家的產品，是要付費的。如果想要自己做<code>Tile</code>，可以參照<a target="_blank" rel="noopener" href="https://docs.pivotal.io/tiledev/2-5/tile-generator.html">連結</a>將自己的服務打包成<code>Tile</code>來安裝。</p>
+</div>
+
+<p><strong>2. BOSH Director</strong><br><code>BOSH</code>是整個<code>Enterprise PKS</code>的核心，<code>BOSH</code>是由<code>Cloud Foundry</code>開發的Open Source專案，用來部署、監控、修復VM。而<code>Cloud Foundry</code>本身平台也是採用<code>BOSH</code>來建置的。在PKS當中，所有的元件包含後面提到的<code>PKS API Server</code>、<code>Harbor</code>或<code>K8s Cluster</code>都是由<code>BOSH Director</code>部署的，<code>BOSH Director</code>還會定期地去監控所有元件的健康狀態(每幾秒就polling一次)，只要發生有問題的元件，就會啟動自動修復機制，非常方便。</p>
+<p><img src="https://i.imgur.com/sp81Dfu.png"></p>
+<p><strong>3. PKS API Server</strong><br><code>PKS API Server</code>負責建置<code>Kubernetes Cluster</code>，不過這是比較攏統的說法，其實是<code>PKS API Server</code>收到Request之後，會通知<code>BOSH Director</code>部署<code>K8s Cluster</code>的Node(VM)，等到Node(VM)都建好後，<code>PKS API Server</code>就會開始針對這些VM去做設定及安裝一些<code>PKS</code>及<code>Kubernetes</code>的必要元件，如<code>kube-proxy</code>, <code>kubelet</code>, <code>docker daemon</code>等等。</p>
+<p><img src="https://i.imgur.com/Xoa6IOf.png"></p>
+<p><img src="https://i.imgur.com/cTl41il.png"></p>
+<p><strong>4. Kubernetes Cluster</strong><br>分成<code>master</code>以及<code>worker</code>，目前PKS佈出來的<code>Kubernetes cluster</code>都是佈在VM上面(畢竟一開始本來就是為vSphere打造的)。<code>PKS</code>可以一次部署多個Cluster，因此企業可以根據不同部門，給不同的<code>Kubernetes Cluster</code>並且指派不同的權限，且彼此是獨立開來的。所有透過<code>BOSH Director</code>跟<code>PKS API Server</code>部署出來的VM，上面都會預先裝好<code>BOSH Agent</code>以及<code>PKS Service(Agent)</code>，<code>BOSH</code>就是透過這些Agent來設定VM以及監控VM健康狀態。</p>
+<p>另外目前<code>Enterprise PKS</code>只支援<code>Docker  Container</code>，不確定之後會不會整合其他的<code>Container Runtime</code>。</p>
+<p><strong>5. Harbor</strong><br><code>Harbor</code>是VMware釋出的一個開源<code>Docker Container Registry</code>，也是屬於<code>CNCF</code>裡的一個專案。<code>Harbor</code>其實並不屬於於PKS產品線的一員，只是通常Pivotal跟VMware會將它與<code>PKS</code>搭配在一起。從上面的架構圖可以看到兩個位於不同地方的Harbor，意思是<code>Harbor</code>有兩種安裝方式：一種是透過<code>PCF Ops Manager</code>安裝，使用Pivotal準備的<code>Harbor Tile</code>去做部署，這樣佈出來的<code>Harbor</code>會在BOSH的管控保護之下。如果不想透過<code>Harbor Tile</code>安裝的話，也可以使用另一種方式自己手動裝(一般是透過<code>docker</code>)，安裝方式可以參考<a href="(https://github.com/goharbor/harbor)">Github</a>，這兩種方式都是可以的。</p>
+<p>Harbor除了能提供一般<code>Container Registry</code>的服務之外，還能夠整合開源專案<a target="_blank" rel="noopener" href="https://github.com/theupdateframework/notary">Notary</a>以及<a target="_blank" rel="noopener" href="https://github.com/coreos/clair">Clair</a>。<code>Notary</code>是CNCF的專案，主要是提供<code>Content Trust</code>簽章服務，確保Image內容不被串改，而<code>Clair</code>能夠針對Image提供靜態分析，根據已知的CVE庫來找出Image淺在的漏洞。</p>
+<div class="note info"><p><code>Harbor Tile</code>除了多了一些<code>BOSH Agent</code>以外，其他部分都跟手動裝的版本一模一樣。</p>
+</div>
+
+<p><img src="https://i.imgur.com/gF2wCXN.jpg"></p>
+<p><strong>6. PKS Client</strong><br>目前<code>PKS</code>以及<code>BOSH</code>都尚未提供GUI介面來做操作，因此都必須透過<code>CLI</code>來做操作。通常會找一台主機安裝所需要的<code>CLI</code>，這台機器我們就稱為<code>PKS Client</code>，<code>PKS Client</code>並沒有限制一定要甚麼作業系統或是多少資源，就只要能安裝<code>CLI</code>以及存取到<code>PKS</code>環境就可以了。</p>
+<p><strong>7. NSX-T</strong><br><code>NSX-T</code>是VMware旗下<code>Networking Virtualization</code>產品，與<code>NSX-V</code>不同，<code>NSX-T</code>是完全獨立的原件，它並沒有限制一定要整合<code>vSphere</code>或是建置在<code>vSphere</code>環境上。像筆者就看過<code>OpenStack</code>整合<code>NSX-T</code>的。另外<code>NSX-T</code>也支援<code>Container</code>環境。</p>
+<p><code>NSX-T</code>在<code>Enterprise PKS</code>環境中同樣不是必須的，也完全與Pivotal無關係(因此沒有甚麼<code>NSX-T Tile</code> xD)，當然你可以不採用<code>NSX-T</code>，直接使用vSphere環境的<code>vSS</code>或是<code>vDS</code>提供給<code>Enterprise PKS</code>環境網路，但是筆者認為<code>PKS</code>要整合<code>NSX-T</code>才能完全增強<code>PKS</code>的功能(可以參照<a target="_blank" rel="noopener" href="https://docs.pivotal.io/runtimes/pks/1-4/release-notes.html#v1.4.1-iaas">比較表</a>)，因為<code>NSX-T</code>除了提供<code>SDN</code>功能之外，還提供了非常強大的<code>微分割</code>，微分割的單位可以縮小到pod跟pod之間，也就是管理者可以自定義ACL給不同的pod，進而達到強大的隔離性。雖然<code>NSX-T</code>很強大且也可以完全整合<code>PKS</code>，但是筆者認為<code>NSX-T</code>還是一個不太穩定的產品，可能剛出來不久還有許多問題跟功能尚未完成，感覺還有一段路要走。</p>
+<p><img src="https://i.imgur.com/rYupFf7.png"></p>
+<h2 id="安裝"><a href="#安裝" class="headerlink" title="安裝"></a>安裝</h2><p><code>Enterprise PKS</code>目前安裝方式都是使用<code>PCF Ops Manager</code>來做安裝，由於步驟繁多，因此這裡不多加闡述，有興趣可以參考官方文件 - <a target="_blank" rel="noopener" href="https://docs.pivotal.io/runtimes/pks/1-4/index.html">https://docs.pivotal.io/runtimes/pks/1-4/index.html</a></p>
+<p><strong>Preparation:</strong></p>
+<ol>
+<li>vSphere Environment</li>
+<li>vCenter Server</li>
+<li>NSX-T (Optional)</li>
+<li>Ops Manager OVA</li>
+<li>PKS Tile</li>
+<li>Harbor Tile (Optional)</li>
+<li>BOSH/PKS/Ops Manager CLI</li>
+</ol>
+<h2 id="PKS支援Cluster-版本"><a href="#PKS支援Cluster-版本" class="headerlink" title="PKS支援Cluster 版本"></a>PKS支援Cluster 版本</h2><p>Release Notes - <a target="_blank" rel="noopener" href="https://docs.pivotal.io/runtimes/pks/1-4/release-notes.html#1.4.1">https://docs.pivotal.io/runtimes/pks/1-4/release-notes.html#1.4.1</a></p>
+<p><code>Enterprise PKS</code>目前最新版是<code>1.4.1</code>，此版所對應的<code>Kubernetes</code>版本是<code>v1.13.5</code>，目前尚無法選擇要部署的<code>Kubernetes</code>版本，因為<code>BOSH</code>部署方式是使用<code>VM Template</code>，安裝套件都是已經包好的了，因此如果想要使用新一點版本的<code>Kubernetes</code>，只能等到下次<code>PKS</code>更新之後了。 </p>
+<h4 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h4><ol>
+<li>Pivotal.io - <a target="_blank" rel="noopener" href="https://pivotal.io/">https://pivotal.io/</a></li>
+<li>Rancher - <a target="_blank" rel="noopener" href="https://rancher.com/">https://rancher.com/</a></li>
+<li>OpenShift - <a target="_blank" rel="noopener" href="https://www.openshift.com/">https://www.openshift.com/</a></li>
+<li>IBM Cloud Private - <a target="_blank" rel="noopener" href="https://www.ibm.com/tw-zh/cloud/private">https://www.ibm.com/tw-zh/cloud/private</a></li>
+<li>BOSH - <a target="_blank" rel="noopener" href="https://www.bosh.io/docs/">https://www.bosh.io/docs/</a></li>
+<li>Harbor - <a target="_blank" rel="noopener" href="https://github.com/goharbor/harbor">https://github.com/goharbor/harbor</a></li>
+<li>Notary - <a target="_blank" rel="noopener" href="https://github.com/theupdateframework/notary">https://github.com/theupdateframework/notary</a></li>
+<li>Clair - <a target="_blank" rel="noopener" href="https://github.com/coreos/clair">https://github.com/coreos/clair</a></li>
+<li>NSX-T Data Center Installation Guide</li>
+<li>VMware Cloud PKS - <a target="_blank" rel="noopener" href="https://cloud.vmware.com/vmware-cloud-pks">https://cloud.vmware.com/vmware-cloud-pks</a></li>
+<li>Enterprise PKS document -<br><a target="_blank" rel="noopener" href="https://docs.vmware.com/en/VMware-NSX-T-Data-Center/2.4/nsxt_24_install.pdf">https://docs.vmware.com/en/VMware-NSX-T-Data-Center/2.4/nsxt_24_install.pdf</a><a target="_blank" rel="noopener" href="https://docs.pivotal.io/runtimes/pks/1-4/index.html">https://docs.pivotal.io/runtimes/pks/1-4/index.html</a></li>
+<li>VMware 發佈 VMware Essential PKS -<br><a target="_blank" rel="noopener" href="https://blogs.vmware.com/vmware-taiwan/2019/03/01/vmware-%E7%99%BC%E4%BD%88-vmware-essential-pks/">https://blogs.vmware.com/vmware-taiwan/2019/03/01/vmware-%E7%99%BC%E4%BD%88-vmware-essential-pks/</a></li>
+</ol>
+<div class="note info"><p>文章內容的轉載、重製、發佈，請註明出處: <a href="https://pohsienshih.github.io/">https://pohsienshih.github.io</a></p>
+</div>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/pks/" rel="tag"># pks</a>
+              <a href="/tags/kubernetes/" rel="tag"># kubernetes</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/2019-iThome-Cyber-Sec-Notes/" rel="prev" title="2019 iThome資安大會筆記">
+                  <i class="fa fa-chevron-left"></i> 2019 iThome資安大會筆記
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/Enterprise-PKS-K8s-Node-Disk-Out-Of-Space/" rel="next" title="針對Enterprise PKS環境的K8s Cluster Node硬碟空間不足測試及解法">
+                  針對Enterprise PKS環境的K8s Cluster Node硬碟空間不足測試及解法 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Pohsien Shih</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

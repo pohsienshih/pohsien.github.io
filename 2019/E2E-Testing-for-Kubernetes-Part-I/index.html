@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-pohsien/favicon-32x32-pohsien.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-pohsien/favicon.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"pohsienshih.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":true}};
+  </script>
+<meta name="description" content="現今 Kubernetes Cluster 部署方式越來越多種，部署門檻也越來越低，但是在部署完之後要如何確認自己的 Cluster 真的是正常可用的？ 大多數的人(包含筆者以前)都是簡單部署一些 Deployment 或是 Service 看是否有 running 就認為 Cluster 是正常的，或是部署時沒有看到什麼錯誤訊息就覺得沒事，但是這樣是不太足夠的，因為有可能壞掉的是一些不常使用的功">
+<meta property="og:type" content="article">
+<meta property="og:title" content="End-to-End Testing for Kubernetes (Part I) - kubetest">
+<meta property="og:url" content="https://pohsienshih.github.io/2019/E2E-Testing-for-Kubernetes-Part-I/index.html">
+<meta property="og:site_name" content="Pohsien Workspace">
+<meta property="og:description" content="現今 Kubernetes Cluster 部署方式越來越多種，部署門檻也越來越低，但是在部署完之後要如何確認自己的 Cluster 真的是正常可用的？ 大多數的人(包含筆者以前)都是簡單部署一些 Deployment 或是 Service 看是否有 running 就認為 Cluster 是正常的，或是部署時沒有看到什麼錯誤訊息就覺得沒事，但是這樣是不太足夠的，因為有可能壞掉的是一些不常使用的功">
+<meta property="og:locale">
+<meta property="og:image" content="https://pohsienshih.github.io/images/e2e_k8s/kubetest.png">
+<meta property="og:image" content="https://pohsienshih.github.io/images/e2e_k8s/e2e-running.png">
+<meta property="og:image" content="https://pohsienshih.github.io/images/e2e_k8s/junit-output.png">
+<meta property="og:image" content="https://pohsienshih.github.io/images/e2e_k8s/kubetest-workflow.png">
+<meta property="og:image" content="https://pohsienshih.github.io/images/e2e_k8s/hack-e2e-lookkubetest.png">
+<meta property="og:image" content="https://pohsienshih.github.io/images/e2e_k8s/hack-e2e-getkubetest.png">
+<meta property="og:image" content="https://pohsienshih.github.io/images/e2e_k8s/hack-e2e-history.png">
+<meta property="article:published_time" content="2019-10-25T09:16:19.000Z">
+<meta property="article:modified_time" content="2020-12-31T09:05:50.829Z">
+<meta property="article:author" content="Pohsien Shih">
+<meta property="article:tag" content="kubernetes">
+<meta property="article:tag" content="testing">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pohsienshih.github.io/images/e2e_k8s/kubetest.png">
+
+
+<link rel="canonical" href="https://pohsienshih.github.io/2019/E2E-Testing-for-Kubernetes-Part-I/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'default'
+  };
+</script>
+<title>End-to-End Testing for Kubernetes (Part I) - kubetest | Pohsien Workspace</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-150934951-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-150934951-1');
+      }
+    </script>
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Pohsien Workspace</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Cloud Native, Network, Security, etc.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Software-Testing"><span class="nav-number">1.</span> <span class="nav-text">Software Testing</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#SIG-Testing"><span class="nav-number">2.</span> <span class="nav-text">SIG-Testing</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Cluster-E2E-Testing"><span class="nav-number">3.</span> <span class="nav-text">Cluster E2E Testing</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Kubetest-Usage"><span class="nav-number">3.1.</span> <span class="nav-text">Kubetest Usage</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Kubetest-Workflow"><span class="nav-number">3.2.</span> <span class="nav-text">Kubetest Workflow</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Stage-1-kubernetes-hack-e2e-go-gt-test-infra-kubetest"><span class="nav-number">3.2.1.</span> <span class="nav-text">Stage 1: kubernetes&#x2F;hack&#x2F;e2e.go -&gt; test-infra&#x2F;kubetest</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Stage-2-test-infra-kubetest-gt-kubernetes-hack-ginkgo-e2e-sh"><span class="nav-number">3.2.2.</span> <span class="nav-text">Stage 2: test-infra&#x2F;kubetest -&gt; kubernetes&#x2F;hack&#x2F;ginkgo-e2e.sh</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Stage-3-kubernetes-hack-ginkgo-e2e-sh-gt-kubernetes-test-e2e-e2e-test-go-gt-kubernetes-test-e2e-framework-framework-go"><span class="nav-number">3.2.3.</span> <span class="nav-text">Stage 3: kubernetes&#x2F;hack&#x2F;ginkgo-e2e.sh -&gt; kubernetes&#x2F;test&#x2F;e2e&#x2F;e2e_test.go -&gt; kubernetes&#x2F;test&#x2F;e2e&#x2F;framework&#x2F;framework.go</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Test-Suite"><span class="nav-number">3.2.3.1.</span> <span class="nav-text">Test Suite</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Specs"><span class="nav-number">3.2.3.2.</span> <span class="nav-text">Specs</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Kind-of-Tests"><span class="nav-number">3.2.3.3.</span> <span class="nav-text">Kind of Tests</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Execute-Specific-Kind-of-Tests"><span class="nav-number">3.2.3.4.</span> <span class="nav-text">Execute Specific Kind of Tests</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#framework-go"><span class="nav-number">3.2.3.5.</span> <span class="nav-text">framework.go</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Write-Your-Own-Test"><span class="nav-number">3.3.</span> <span class="nav-text">Write Your Own Test</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Specifications"><span class="nav-number">3.3.1.</span> <span class="nav-text">Specifications</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Add-New-Test"><span class="nav-number">3.3.2.</span> <span class="nav-text">Add New Test</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#References"><span class="nav-number">3.4.</span> <span class="nav-text">References</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Pohsien Shih"
+      src="/images/pohsien.jpg">
+  <p class="site-author-name" itemprop="name">Pohsien Shih</p>
+  <div class="site-description" itemprop="description">System Engineer</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/pohsienshih" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;pohsienshih" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:pohsien324@gmail.com" title="E-Mail → mailto:pohsien324@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      相關連結
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://k2r2bai.com/" title="https:&#x2F;&#x2F;k2r2bai.com&#x2F;" rel="noopener" target="_blank">凱仁大大</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.hwchiu.com/" title="https:&#x2F;&#x2F;www.hwchiu.com&#x2F;" rel="noopener" target="_blank">邱牛大大</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.pichuang.com.tw/" title="https:&#x2F;&#x2F;blog.pichuang.com.tw&#x2F;" rel="noopener" target="_blank">小飛機</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.facebook.com/groups/cloudnative.tw/" title="https:&#x2F;&#x2F;www.facebook.com&#x2F;groups&#x2F;cloudnative.tw&#x2F;" rel="noopener" target="_blank">CNTUG</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://yylin1.github.io/" title="https:&#x2F;&#x2F;yylin1.github.io&#x2F;" rel="noopener" target="_blank">義洋</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://medium.com/@b02310043" title="https:&#x2F;&#x2F;medium.com&#x2F;@b02310043" rel="noopener" target="_blank">莫阿兆</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="default">
+    <link itemprop="mainEntityOfPage" href="https://pohsienshih.github.io/2019/E2E-Testing-for-Kubernetes-Part-I/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/pohsien.jpg">
+      <meta itemprop="name" content="Pohsien Shih">
+      <meta itemprop="description" content="System Engineer">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Pohsien Workspace">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          End-to-End Testing for Kubernetes (Part I) - kubetest
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-10-25 17:16:19" itemprop="dateCreated datePublished" datetime="2019-10-25T17:16:19+08:00">2019-10-25</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2020-12-31 17:05:50" itemprop="dateModified" datetime="2020-12-31T17:05:50+08:00">2020-12-31</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Kubernetes/" itemprop="url" rel="index"><span itemprop="name">Kubernetes</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>現今 Kubernetes Cluster 部署方式越來越多種，部署門檻也越來越低，但是在部署完之後要如何確認自己的 Cluster 真的是正常可用的？ 大多數的人(包含筆者以前)都是簡單部署一些 <code>Deployment</code> 或是 <code>Service</code> 看是否有 running 就認為 Cluster 是正常的，或是部署時沒有看到什麼錯誤訊息就覺得沒事，但是這樣是不太足夠的，因為有可能壞掉的是一些不常使用的功能或是人工比較難已發現的問題，這樣之後如果使用者部署應用時剛好使用到相關功能，發生問題將會很難查找。</p>
+<p>為了確認 Cluster 功能是否正常，我們可以針對 Cluster 做完整的測試，測試各個API是否正常，但是筆者查了一下發現網路上比較少關於 Kubernetes 測試的詳細資訊，因此花了一點時間研究並紀錄在此系列文章。</p>
+<blockquote>
+<p>注意， Kubernetes 的測試有非常多種層面，例如： Unit Testing 、 Integration Testing 、 E2E Testing 、 Performance/Benchmark Testing 、 Load Testing 、 Stress Testing 或是 Security Testing，但是在此系列文中，強調的是<code>測試 Cluster 的功能是否正常</code>，因此重點會放在 E2E Testing 上。</p>
+</blockquote>
+<p>E2E Testing for Kubernetes:</p>
+<ul>
+<li><a href="/2019/E2E-Testing-for-Kubernetes-Part-I/" title="End-to-End Testing for Kubernetes (Part I) - kubetest">End-to-End Testing for Kubernetes (Part I) - kubetest</a></li>
+<li><a href="/2019/E2E-Testing-for-Kubernetes-Part-II/" title="End-to-End Testing for Kubernetes (Part II) - Comformance Testing">End-to-End Testing for Kubernetes (Part II) - Comformance Testing</a>
+
+</li>
+</ul>
+<a id="more"></a>
+
+<br />
+另外筆者在 Cloud Native Taiwan User Group (CNTUG) Meetup #20 也有一場 talk 是在介紹這個主題，大家可以參考以下的簡報：
+
+<div style="left: 10%; width: 100%; height: 0; position: relative; padding-bottom: 56.1972%;"><iframe src="//speakerdeck.com/player/8de155b223c54271b88421f2b5a0608d" style="border: 0; top: 0; left: 0; width: 80%; height: 80%; position: absolute;" allowfullscreen scrolling="no" allow="encrypted-media"></iframe></div>
+
+<h1 id="Software-Testing"><a href="#Software-Testing" class="headerlink" title="Software Testing"></a>Software Testing</h1><p>一般 Software Testing 可分成三種比較常見的測試方式:</p>
+<p><strong>Unit Testing</strong><br>單元測試，測試單一功能或是某個函數，例如測試登入功能是否正常。這種測試維度比較小，測試程式的撰寫也比較單純一點。</p>
+<p><strong>Integration Testing</strong><br>整合測試，這種通常是測試多個具有關聯或相依性的功能(或函數)整合之後是否正常，維度比單元測試還要大一點。</p>
+<p><strong>End to End (E2E) Testing</strong><br>前面單元測試跟整合測試兩個都是比較偏向 Developer 驗證 Code 或是函數是否正常，而 E2E 測試比較偏向以使用者角度去操作系統，測試人員把自己當成一般使用者去對整個系統做操作，測試每個功能是否正常。</p>
+<p>由於我們只是要確認 Kubernetes Cluster 功能是否正常，並不是要開發，因此此系列文會著重在 Kubernetes E2E Testing 。 </p>
+<h1 id="SIG-Testing"><a href="#SIG-Testing" class="headerlink" title="SIG-Testing"></a>SIG-Testing</h1><p><code>Special Interest Group (SIG)</code> 是由一群志同道合來自各公司各領域的人組成的組織或是團體，主要是一起學習某個技術、對某個技術進行探討或是一起維護某個專案，類似社群的概念，這些 SIG 可能也會定期的舉辦 Meetup 或是 Conference 等。 Kubernetes Community 是由許多不同的 SIG 組成，例如: <code>sig-network</code> 是負責 Kubernetes 中網路部分、 <code>sig-docs</code> 是負責文件、而 <code>sig-storage</code> 是負責儲存部分等等。每個 SIG 都有自己負責的 Subproject ，這些 Subproject 可能是文件撰寫，也有可能是 Code 撰寫。除了 SIG 之外，Kubnernetes Community還有其他的 Subgroups 如 Committees 、Working Groups 跟 User Groups 等等，</p>
+<p>如果對於 Kubernetes Community 組成有興趣，可以參考: <a target="_blank" rel="noopener" href="https://github.com/kubernetes/community/blob/master/governance.md">Kubernetes Community Governance Model</a> 。<br>如果想了解 Kubernetes 中各個 SIG，可以參考: <a target="_blank" rel="noopener" href="https://github.com/kubernetes/community/blob/master/sig-list.md">Kubernetes SIGs and Working Groups</a>。<br>如果想了解各個 SIG 負責的 Subproject ，可以參考: <a target="_blank" rel="noopener" href="https://github.com/kubernetes/community/blob/master/sigs.yaml">Subprojects of each SIGs</a>。</p>
+<p>在眾多 SIG 當中，負責 Kubernetes 測試的是 <a target="_blank" rel="noopener" href="https://github.com/kubernetes/community/tree/master/sig-testing#testing-special-interest-group">sig-testing</a> ， sig-testing 負責許多知名的 subprojects ，如管理      Kubernetes project 的 CI/CD 系統 - <a target="_blank" rel="noopener" href="https://github.com/kubernetes/test-infra/tree/master/prow">prow</a> ，以及部署 K8s in docker 的 <a target="_blank" rel="noopener" href="https://github.com/kubernetes-sigs/kind">kind</a> 等等。在這裡我們主要會提到的是 - <a target="_blank" rel="noopener" href="https://github.com/kubernetes/test-infra">test-infra</a> 。 test-infra 提供了許多供 Kubernetes 測試的工具，裡面包含了我們要介紹的 Kubernetes E2E Testing Tool - <a target="_blank" rel="noopener" href="https://github.com/kubernetes/test-infra/tree/master/kubetest">kubetest</a>。</p>
+<img src="/images/e2e_k8s/kubetest.png"  style="width:80%">
+
+
+<h1 id="Cluster-E2E-Testing"><a href="#Cluster-E2E-Testing" class="headerlink" title="Cluster E2E Testing"></a>Cluster E2E Testing</h1><p>Kubernetes E2E Testing 主要是驗證所有的功能 (包含 API Server 以及 Controller ) 是否是正常可用的，且 API 行為必須跟 Spec 上一樣。透過這種測試能夠找出一些 Unit Test 、 Integration Test 或是人工難以找出的問題。</p>
+<h2 id="Kubetest-Usage"><a href="#Kubetest-Usage" class="headerlink" title="Kubetest Usage"></a>Kubetest Usage</h2><p>test-infra 釋出了可以對 Kubernetes Cluster 做 E2E Test 的工具 - <code>kubetest</code> ，不過 kubetest 其實是一個整合的介面，他不只可以做一般的 E2E Test ，還整合了如 Conformance Test, Node E2E Test 以及 Performance Test 等等的測試，後續我們會再細部介紹 kubetest 的運作流程。</p>
+<p>這邊需要注意的是: kubetest 在執行 E2E Test 時，會開啟一個乾淨的 Cluster 來做測試，這樣的用意是因為  Kubernetes 是想要針對整個 Kubernetes Source Code 做 E2E Test ，這樣才可以確保當前 Release 出來的 Kubernetes 版本是正常可用的。 因此 kubetest 在執行時會去尋找 Kubernetes Repository ，找到後再 Build Source Code ，接著開啟新的 Cluster 測試。 </p>
+<blockquote>
+<p>kubetest 其實也有被整合到 <a target="_blank" rel="noopener" href="https://github.com/kubernetes/test-infra/tree/master/prow">prow</a> 裡面，任何 Pull Requet 在被 Merge 前，也都會透過 kubetest 進行測試。 </p>
+</blockquote>
+<p>Execution: </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ kubetest --build --provider &lt;yourprovider&gt; --deployment &lt;yourdeployer&gt; --up --<span class="built_in">test</span> --test_args=<span class="string">&quot;--ginkgo.skip(focus)=xxx&quot;</span> --dump &lt;folder&gt; --down</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>Flag:<br><code>--build</code>:       Build binaries (e2e.test, e2e_node.test) for testing.<br><code>--provider</code>:    Specify an alternative provider (gce, local, gke, aks, etc.) for E2E testing, default value is gce.<br><code>--deployment</code>:  Deployment strategies of Kubernetes cluster.  (gce, local, gke, aks, etc.)<br><code>--up</code>:          Turn up a new cluster.<br><code>--test</code>:        Run E2E testing.<br><code>--test_args</code>:   Test matching for ginkgo.<br><code>--down</code>:        Shutdown and delete the cluster<br><code>--dump</code>:        Export the result. ( junit xml format )</p>
+</blockquote>
+<p>這邊比較容易搞混的是 <code>--provider</code> 以及 <code>--deployment</code> ，官方文件對這兩個 flag 並沒有太多的解釋，經過筆者研究了之後，整理出來結論是: <code>--provider</code> 比較像是告訴 kubetest 要在哪個平台上做測試或著是告訴 kubetest 準備哪一個平台使用的 Test Lists，而 <code>--deployment</code> 比較像是告訴 kubetest 你的 Cluster 位置，讓 kubetest 可以存取到 Cluster 。舉例來說如果你設定 <code>--deployment gke</code> ， kubetest 就會知道你的 Cluster 是用 gke 佈出來的，接下來就會等你再提供一些 gke 相關參數(例如提供 <code>kubeconfig</code> 或是一些 token 之類的)，讓 kubetest 能夠存取得到你的 Cluster 。需要注意的是 <code>--provider</code> 跟 <code>--deployment</code> 兩個平台必須一致，否則 kubetest 會無法測試並且報錯，例如 <code>--provider local</code> 配上 <code>--deployment gke</code> 或是 <code>--provider gke</code> 配 <code>--deployment local</code> 這種情況是不行的。</p>
+<blockquote>
+<p>筆者實際執行完整的 E2E Test 大概花了一天左右，不過可能跟筆者 Homelab 硬體資源有關，實際上應該不需要這多時間。</p>
+</blockquote>
+<img src="/images/e2e_k8s/e2e-running.png"  style="width:100%">
+
+<p>使用 <code>--dump</code> flag 會將測試結果存成 JUnit 格式，裡面會寫所有執行的測項以及測試結果 (包括失敗訊息):<br><img src="/images/e2e_k8s/junit-output.png"  style="width:100%"></p>
+<h2 id="Kubetest-Workflow"><a href="#Kubetest-Workflow" class="headerlink" title="Kubetest Workflow"></a>Kubetest Workflow</h2><p>接下來解釋一下 kubetest 運作流程，到底執行 kubetest 之後它做哪些事情呢？</p>
+<img src="/images/e2e_k8s/kubetest-workflow.png"  style="width:80%">
+
+
+<p>上圖為 kubetest 簡單的執行流程圖，基本上大致流程是 <code>kubernetes/hack/e2e.go -&gt; test-infra/kubetest -&gt; kubernetes/hack/ginkgo-e2e.sh -&gt; kubernetes/test/e2e/e2e_test.go -&gt; kubernetes/test/e2e/framework/framework.go -&gt; Start E2E testing</code> 。</p>
+<h3 id="Stage-1-kubernetes-hack-e2e-go-gt-test-infra-kubetest"><a href="#Stage-1-kubernetes-hack-e2e-go-gt-test-infra-kubetest" class="headerlink" title="Stage 1: kubernetes/hack/e2e.go -&gt; test-infra/kubetest"></a>Stage 1: <code>kubernetes/hack/e2e.go -&gt; test-infra/kubetest</code></h3><p><strong><code>kubernetes/hack/e2e.go</code></strong><br>在以往還沒有 kubetest 的時候， Kubernetes 測試都是各自分開的介面，而其中 E2E Testing 部分就是 <code>kubernetes/hack/e2e.go</code> 負責，但是 sig-testing 可能是為了整合這些介面，因此開發了 kubetest ，來讓測試人員能夠直接使用單一介面來做到各式各樣的測試( Cluster E2E Test 、 Node E2E Test 或 Performance Test 等等)。如果你直接去看 <code>kubernetes/hack/e2e.go</code> 的 Source Code，你會發現其實它也是會去抓 kubetest 並且執行 kubetest ，所以你可能會看到網路上一些文章介紹 E2E Testing 的時候是執行 <code>hack/e2e.go --provider xxx ...</code> 而不是 <code>kubetest --provider ...</code> ，這兩個其實是一樣的。</p>
+<img src="/images/e2e_k8s/hack-e2e-lookkubetest.png" style="width:70%">
+<img src="/images/e2e_k8s/hack-e2e-getkubetest.png"  style="width:70%">
+
+<p>如果你去看 <code>kubernetes/hack/e2e.go</code> 的 history ，可以看到他在2017年的時候把 Code 整個改成 kubetest 介面，由此可以得知是從那個時候開始整合進去的。</p>
+<img src="/images/e2e_k8s/hack-e2e-history.png"  style="width:80%">
+
+
+<h3 id="Stage-2-test-infra-kubetest-gt-kubernetes-hack-ginkgo-e2e-sh"><a href="#Stage-2-test-infra-kubetest-gt-kubernetes-hack-ginkgo-e2e-sh" class="headerlink" title="Stage 2: test-infra/kubetest -&gt; kubernetes/hack/ginkgo-e2e.sh"></a>Stage 2: <code>test-infra/kubetest -&gt; kubernetes/hack/ginkgo-e2e.sh</code></h3><p><strong>Ginkgo &amp; Gomega</strong><br>Kubernetes E2E Testing 所有測項其實都是用 <a target="_blank" rel="noopener" href="https://onsi.github.io/ginkgo/">Ginkgo</a> 以及 <a target="_blank" rel="noopener" href="http://onsi.github.io/gomega/">Gomega</a> 撰寫的， Ginkgo 是 Golang 的 <code>Behavior-Driven Development (BDD) Testing Framework</code> ，而 Gomaga 是 Golang 的 Matcher Library， 用在測項結果比對。 </p>
+<p>這邊簡單解釋一下 BDD 為何，一般在做 Software Testing 時， RD 或是 QA 可能會依照規格書撰寫出對應的測試 Code ，但是這些 Code 可能只有技術人員看得懂，這樣會導致技術與非技術人員很難協同作業或討論，因此很容易發生開發者誤解測項或是規格書制定不清楚的情況。而 BDD 就是為了解決這個問題，讓開發人員以及非技術人員能夠一同協作的一種開發方式，首先大家會共同制定一份規格書，規格書會使用更接近人類語意的自然語言來描述軟體功能和測試案例，制定完後， QA 能夠直接執行這份規格書來測試，無需再額外寫一些複雜的測試 Code，簡單來說 BDD 就是以軟體的行為來描述測試，讓大家都能看懂。</p>
+<p>Ginkgo 主要由以下三個部分組成：</p>
+<ol>
+<li>Main Program: 主要要測的程式。</li>
+<li>Test Suite: 測試包，通常會包含很多 Spec (測項)。</li>
+<li>Spec: 測項 (可能一個或多個)。</li>
+</ol>
+<p>以下使用簡單的範例來介紹如何使用 Ginkgo 和 Gomaga ，<a target="_blank" rel="noopener" href="https://github.com/pohsienshih/ginkgo-gomega-example">範例 Code</a> 可以從筆者 GitHub 上下載，有興趣可以去載下來執行看看。</p>
+<ol>
+<li><p>下載並安裝 Ginkgo 和 Gomega</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ go get github.com/onsi/ginkgo/ginkgo</span><br><span class="line">$ go get github.com/onsi/gomega/...</span><br><span class="line"><span class="comment"># Install Ginkgo CLI</span></span><br><span class="line">$ go install github.com/onsi/ginkgo/ginkgo</span><br></pre></td></tr></table></figure></li>
+<li><p>這邊撰寫一個簡單的 <code>myproject package</code> ，裡面會有兩個函數: <code>Greeting()</code> 和 <code>Calc()</code> 。 <code>Greeting()</code> 功能是是傳入一個字串，會回傳 <code>Hello xxx</code> 的打招呼函數； <code>Calc()</code> 是傳入一個數值，會回傳十倍的值給你。<br><code>myproject.go</code></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> myproject</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Greeting</span><span class="params">(name <span class="keyword">string</span>)</span> <span class="title">string</span></span>&#123; </span><br><span class="line">   <span class="keyword">return</span> <span class="string">&quot;Hello &quot;</span> + name + <span class="string">&quot;.&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Calc</span><span class="params">(number <span class="keyword">int</span>)</span> <span class="title">int</span></span>&#123; </span><br><span class="line">   <span class="keyword">return</span> number * <span class="number">10</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>新增 Test Suite ， Test Suite 就是測試包的意思，測試包會去抓所有的測試檔，並執行裡面的測項 ( Spec )。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ <span class="built_in">cd</span> myproject</span><br><span class="line">$ ls</span><br><span class="line">myproject.go</span><br><span class="line">$ ginkgo bootstrap</span><br><span class="line">$ ls</span><br><span class="line">myproject.go myproject_suite_test.go</span><br></pre></td></tr></table></figure></li>
+<li><p>查看 Test Suite ，會發現裡面會有一個 <code>Testxxx()</code> 函數。預設 Golang 本身就有支援測試的功能 ( <code>go test</code> )，當執行 <code>go test</code> 後， go 會去抓目錄底下所有 <code>xxx_test.go</code> 的檔案，並執行這些 go 檔裡面 <code>Testxxx()</code> 的函數，這些函數就是你寫的測項。 Ginkgo 也是使用 <code>go test</code> 這種特性，讓 go 先去執行 <code>Testxxx()</code>，只不過在這個<code> Testxxx()</code> 函數裡執行的是 Ginkgo 的函數 <code>RunSpecs()</code> ， <code>RunSpecs()</code> 會去抓目錄底下所有的測項 ( Spec ) 。<br><code>myproject_suite_test.go</code></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> myproject_test </span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">      <span class="string">&quot;testing&quot;</span></span><br><span class="line">      . <span class="string">&quot;github.com/onsi/ginkgo&quot;</span></span><br><span class="line">      . <span class="string">&quot;github.com/onsi/gomega&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestMyproject</span><span class="params">(t *testing.T)</span></span> &#123;</span><br><span class="line">      RegisterFailHandler(Fail)</span><br><span class="line">      RunSpecs(t, <span class="string">&quot;Myproject Suite&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>接著就是產生測試檔</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ ginkgo generate mytest</span><br><span class="line">$ ls</span><br><span class="line">myproject.go myproject_suite_test.go mytest_test.go</span><br></pre></td></tr></table></figure>
+<p> <code>mytest_test.go</code></p>
+ <figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> myproject_test </span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">        . <span class="string">&quot;github.com/onsi/ginkgo&quot;</span></span><br><span class="line">        . <span class="string">&quot;github.com/onsi/gomega&quot;</span></span><br><span class="line">        . <span class="string">&quot;github.com/myproject&quot;</span></span><br><span class="line">)</span><br><span class="line"><span class="keyword">var</span> _ = Describe(<span class="string">&quot;Mytest&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure></li>
+<li><p>撰寫測項 ( Spec ) ，如果你曾經有寫過其他語言的測試，你可能會發現 Ginkgo 架構與他們非常相似，都是由三個部分組成: <code>Describe</code> , <code>Context</code> 以及 <code>It</code> ， Describe 是描述這個 Spec ，例如: <code>測試 Greeting() 函數</code> 。 Context 是補充說明這個 Spec ，可以增加條件式或是任何規則還讓 Spec 行為更加明確，例如： <code>傳給它一個字串</code> 或是 <code>傳給它一個中英文夾雜的字串</code> 等等。最後 It 是預期達到的結果，例如： <code>應該要跟我打招呼</code> , <code>要回傳什麼值</code> 或 <code>要報錯</code> 等等。</p>
+<p> 在此範例中， Spec 1 是測試傳入一個字串給 <code>Greeing()</code> ，驗證是否會回傳 <code>Hello &lt;字串&gt;</code>。 Spec 2 是測試傳入一個數值給 <code>Calc()</code> ，驗證是否會回傳十倍的值。</p>
+<p> <code>mytest_test.go</code></p>
+ <figure class="highlight go"><table><tr><td class="code"><pre><span class="line">...</span><br><span class="line"><span class="keyword">var</span> _ = Describe(<span class="string">&quot;Mytest&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> name <span class="keyword">string</span>= <span class="string">&quot;test&quot;</span></span><br><span class="line">    <span class="keyword">var</span> number <span class="keyword">int</span>= <span class="number">99</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Spec 1</span></span><br><span class="line">    Describe(<span class="string">&quot;Test Greeting function&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">            Context(<span class="string">&quot;Giva a name&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">                It(<span class="string">&quot;Should greeting&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">                    Expect(Greeting(name)).To(Equal(<span class="string">&quot;Hello &quot;</span>+name+<span class="string">&quot;.&quot;</span>))</span><br><span class="line">                &#125;)</span><br><span class="line">            &#125;)</span><br><span class="line">    &#125;)</span><br><span class="line">    <span class="comment">// Spec 2</span></span><br><span class="line">    Describe(<span class="string">&quot;Test Calc function&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">            Context(<span class="string">&quot;Give a number&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">                It(<span class="string">&quot;Should get the correct result&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">                    Expect(Calc(number)).To(Equal(number*<span class="number">10</span>))</span><br><span class="line">                &#125;)</span><br><span class="line">            &#125;)</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>另一個範例是 Ginkgo 的一個函數 <code>BeforeEach()</code> ，由於 Kubernetes 的 E2E Test 中使用了很多 BeforeEach ，因此這裡特別解釋一下 BeforeEach  的作用。 BeforeEach 執行時機是在 <code>每個 Spec 執行前</code> ，我們可以將一些參數初始化的步驟或是一些可能會被 Spec 影響的步驟放到 BeforeEach 裡面，這樣可以確保每次的測試都是公平乾淨且不受影響的。</p>
+<p>從底下例子來看，我們宣告一個 <code>number</code> 並給它值 <code>99</code> ， Spec 1 會去執行驗證 <code>Calc()</code> 函數，驗證完後會把 <code>number</code> 值改掉，如果沒有把 <code>number = 99</code> 放到 <code>BeforeEach()</code> 裡面，那 Spec 2 就會直接使用 <code>被改過</code> 的 <code>number</code> ( 這時應該是  <code>990</code> ) 去做測試，然後就會測失敗，因此必須將 <code>number = 99</code> 放到 <code>BeforeEach()</code> 裡面，讓 Ginkgo 執行每個 Spec 之前都重新指派一次 <code>number</code> 的值。</p>
+<p> <code>mytest2_test.go</code></p>
+ <figure class="highlight go"><table><tr><td class="code"><pre><span class="line">… </span><br><span class="line"><span class="keyword">var</span> _ = Describe(<span class="string">&quot;Mytest&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> number <span class="keyword">int</span></span><br><span class="line">    <span class="comment">// 如果將 number 指派放到 BeforeEach 外面，則 number 的值會被 Spec 1 改掉。</span></span><br><span class="line">    <span class="comment">// number = 99</span></span><br><span class="line"></span><br><span class="line">    BeforeEach(<span class="function"><span class="keyword">func</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="comment">// 將number 指派放到 BeforeEach 裡面可以確保值永遠都是 99</span></span><br><span class="line">        number  = <span class="number">99</span></span><br><span class="line">    &#125;)</span><br><span class="line">    Describe(<span class="string">&quot;Test Calc function again&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">        Context(<span class="string">&quot;Give a number 99&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">            <span class="comment">// Spec 1 </span></span><br><span class="line">            It(<span class="string">&quot;Should return 990&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">                Expect(Calc(number)).To(Equal(<span class="number">990</span>))</span><br><span class="line">                number = Calc(number2)</span><br><span class="line">            &#125;)</span><br><span class="line">            <span class="comment">// Spec 2</span></span><br><span class="line">            It(<span class="string">&quot;Should return 990, too&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">                Expect(Calc(number)).To(Equal(<span class="number">990</span>))</span><br><span class="line">            &#125;)</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;)   </span><br></pre></td></tr></table></figure></li>
+<li><p>執行測試，我們可以直接使用 <code>ginkgo</code> 或是 <code>go test</code> 指令來執行測試。執行完後 Ginkgo 會顯示執行了幾個 Spec ，然後幾個成功幾個失敗。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ ginkgo</span><br><span class="line"><span class="comment"># Show all Specs</span></span><br><span class="line">$ ginkgo -v</span><br><span class="line"></span><br><span class="line">Running Suite: Myproject Suite</span><br><span class="line">==============================</span><br><span class="line">Random Seed: 1568041760</span><br><span class="line">Will run 4 of 4 Specs</span><br><span class="line"></span><br><span class="line">•••</span><br><span class="line">Ran 4 of 4 Specs <span class="keyword">in</span> 0.001 seconds</span><br><span class="line">SUCCESS! -- 4 Passed | 0 Failed | 0 Pending | 0 Skipped</span><br><span class="line">PASS</span><br><span class="line"></span><br><span class="line">Ginkgo ran 1 suite <span class="keyword">in</span> 3.471827325s</span><br><span class="line">Test Suite Passed</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>到這邊大概了解 Ginkgo 的作用後，接下來我們回到 <code>test-infra/kubetest</code> ，根據程式碼來看一下 kubetest 做的事。</p>
+<p>當我們執行 <code>kubetest --test</code> 的時候， <code>test-infra/kubetest/main.go</code> 會去執行 <code>complete()</code> 函數，接著根據指定的 <code>--deployment</code> 執行 <code>run(deploy, *o)</code>。</p>
+<p><code>test-infra/kubetest/main.go</code></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">...</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">   ...</span><br><span class="line">   err := complete(o)</span><br><span class="line">   ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">complete</span><span class="params">(o *options)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">   ...</span><br><span class="line">   <span class="keyword">if</span> err := run(deploy, *o); err != <span class="literal">nil</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> err</span><br><span class="line">   &#125;</span><br><span class="line">   ...</span><br><span class="line">&#125;</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p><code>test-infra/kubetest/e2e.go</code> 裡的 <code>run()</code> 函數，會判斷是否有設定 <code>--test</code> flag，有得話就執行 <code>Run()</code> 來做 E2E test ，可以看到 <code>Run()</code> 函數裡會去呼叫 <code>ginkgo-e2e.sh</code> 。</p>
+<p><code>test-infra/kubetest/e2e.go</code></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">...</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">run</span><span class="params">(deploy deployer, o options)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">   ...</span><br><span class="line">   <span class="comment">// 判斷是否有設定 --test flag</span></span><br><span class="line">   <span class="keyword">if</span> o.test &#123;</span><br><span class="line">      <span class="comment">// 判斷是否有 build 了 e2e.test</span></span><br><span class="line">      <span class="keyword">if</span> err := control.XMLWrap(&amp;suite, <span class="string">&quot;test setup&quot;</span>, deploy.TestSetup); err != <span class="literal">nil</span> &#123;</span><br><span class="line">         ...</span><br><span class="line">      &#125; </span><br><span class="line">      ...</span><br><span class="line">      <span class="keyword">else</span> &#123;</span><br><span class="line">         <span class="keyword">if</span> o.deployment != <span class="string">&quot;conformance&quot;</span> &#123;</span><br><span class="line">            ...</span><br><span class="line">         &#125;</span><br><span class="line">         ...</span><br><span class="line">         <span class="keyword">else</span>&#123;</span><br><span class="line">            ...</span><br><span class="line">            <span class="keyword">if</span> tester != <span class="literal">nil</span> &#123;</span><br><span class="line">               <span class="comment">// 開始測試</span></span><br><span class="line">               <span class="keyword">return</span> tester.Run(control, testArgs);		</span><br><span class="line">            &#125;</span><br><span class="line">            ...</span><br><span class="line">         &#125; </span><br><span class="line">      &#125;</span><br><span class="line">   &#125;      </span><br><span class="line">&#125;</span><br><span class="line">...</span><br><span class="line"></span><br><span class="line"><span class="comment">// Run executes ./hack/ginkgo-e2e.sh</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(t *GinkgoScriptTester)</span> <span class="title">Run</span><span class="params">(control *process.Control, testArgs []<span class="keyword">string</span>)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">   <span class="keyword">return</span> control.FinishRunning(exec.Command(<span class="string">&quot;./hack/ginkgo-e2e.sh&quot;</span>, testArgs...))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>由此可以知道 kubetest 其實是使用 Ginkgo 來執行所有測項，並且會執行 <code>ginkgo-e2e.sh</code>。</p>
+</li>
+</ol>
+<h3 id="Stage-3-kubernetes-hack-ginkgo-e2e-sh-gt-kubernetes-test-e2e-e2e-test-go-gt-kubernetes-test-e2e-framework-framework-go"><a href="#Stage-3-kubernetes-hack-ginkgo-e2e-sh-gt-kubernetes-test-e2e-e2e-test-go-gt-kubernetes-test-e2e-framework-framework-go" class="headerlink" title="Stage 3: kubernetes/hack/ginkgo-e2e.sh -&gt; kubernetes/test/e2e/e2e_test.go -&gt; kubernetes/test/e2e/framework/framework.go"></a>Stage 3: <code>kubernetes/hack/ginkgo-e2e.sh -&gt; kubernetes/test/e2e/e2e_test.go -&gt; kubernetes/test/e2e/framework/framework.go</code></h3><p>在 Stage 2 我們已經知道 kubetest 會執行 Ginkgo ， 接下來解釋到底 Test Lists 在哪裡。<br>我們實際去看 <code>kubernetes/hack/ginkgo-e2e.sh</code> 原始碼，會看到 Ginkgo 會去執行 <code>e2e.test</code>。</p>
+<p><code>kubernetes/hack/ginkgo-e2e.sh</code></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">...</span><br><span class="line"><span class="comment"># Find the ginkgo binary build as part of the release.</span></span><br><span class="line">ginkgo=$(kube::util::find-binary <span class="string">&quot;ginkgo&quot;</span>)</span><br><span class="line">e2e_test=$(kube::util::find-binary <span class="string">&quot;e2e.test&quot;</span>)</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line"><span class="string">&quot;<span class="variable">$&#123;ginkgo&#125;</span>&quot;</span> <span class="string">&quot;<span class="variable">$&#123;ginkgo_args[@]:+<span class="variable">$&#123;ginkgo_args[@]&#125;</span>&#125;</span>&quot;</span> <span class="string">&quot;<span class="variable">$&#123;e2e_test&#125;</span>&quot;</span> -- \</span><br><span class="line">  <span class="string">&quot;<span class="variable">$&#123;auth_config[@]:+<span class="variable">$&#123;auth_config[@]&#125;</span>&#125;</span>&quot;</span> \</span><br><span class="line">  --ginkgo.flakeAttempts=<span class="string">&quot;<span class="variable">$&#123;FLAKE_ATTEMPTS&#125;</span>&quot;</span> \</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>e2e.test 就是 Test Suite 以及 測項的 Binary 檔，前面我們有提到 <code>kubetest --build</code> 會去 Build Kubernetes Source Code ，其中一個就是把 <code>kubernetes/test/e2e</code> Build 成 e2e.test (可參考 <a target="_blank" rel="noopener" href="https://github.com/kubernetes/kubernetes/blob/master/test/e2e/BUILD">BUILD</a>)。 </p>
+<blockquote>
+<p>這邊 Build 其實就是做 <code>make</code> 的動作，如果對於 <code>make</code> 細節有興趣，可以去研究 Kubernetes 目錄裡的 <code>Makefile</code> 。</p>
+</blockquote>
+<p>我們再回到 kubetest 原始碼來看實際步驟，當執行 <code>kubetest --build</code> 時，<code>test-infra/kubetest/main.go</code> 會去執行 <code>Build()</code> 函數，而這個 <code>BUild()</code> 函數是位於 <code>test-infra/kubetest/build.go</code> 裡。</p>
+<p><code>test-infra/kubetest/main.go</code></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">acquireKubernetes</span><span class="params">(o *options, d deployer)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">   <span class="comment">// Potentially build kubernetes</span></span><br><span class="line">   <span class="comment">// 判斷有沒有設定 --build flag</span></span><br><span class="line">	<span class="keyword">if</span> o.build.Enabled() &#123;</span><br><span class="line">		<span class="keyword">var</span> err error</span><br><span class="line">		<span class="comment">// kind deployer manages build</span></span><br><span class="line">		<span class="keyword">if</span> k, ok := d.(*kind.Deployer); ok &#123;</span><br><span class="line">			err = control.XMLWrap(&amp;suite, <span class="string">&quot;Build&quot;</span>, k.Build)</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">         <span class="comment">// o.build.Build 就是 kubetest --build=&quot;值&quot; 指定的值，如果沒指定</span></span><br><span class="line">         <span class="comment">// 預設是  quick-release</span></span><br><span class="line">			err = control.XMLWrap(&amp;suite, <span class="string">&quot;Build&quot;</span>, o.build.Build)</span><br><span class="line">		&#125;</span><br><span class="line">		...</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>Build()</code> 函數會實際去執行 <code>make</code> 來 Build Source Code 。</p>
+<p><code>test-infra/kubetest/build.go</code></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(b *buildStrategy)</span> <span class="title">Build</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> target <span class="keyword">string</span></span><br><span class="line">	<span class="keyword">switch</span> *b &#123;</span><br><span class="line">	<span class="keyword">case</span> <span class="string">&quot;bazel&quot;</span>:</span><br><span class="line">		target = <span class="string">&quot;bazel-release&quot;</span></span><br><span class="line">	<span class="keyword">case</span> <span class="string">&quot;e2e&quot;</span>:</span><br><span class="line">		<span class="comment">//TODO(Q-Lee): we should have a better way of build just the e2e tests</span></span><br><span class="line">		target = <span class="string">&quot;bazel-release&quot;</span></span><br><span class="line">      ...</span><br><span class="line">	<span class="keyword">case</span> <span class="string">&quot;host-go&quot;</span>:</span><br><span class="line">		target = <span class="string">&quot;all&quot;</span></span><br><span class="line">	<span class="keyword">case</span> <span class="string">&quot;quick&quot;</span>:</span><br><span class="line">		target = <span class="string">&quot;quick-release&quot;</span></span><br><span class="line">	<span class="keyword">case</span> <span class="string">&quot;release&quot;</span>:</span><br><span class="line">		target = <span class="string">&quot;release&quot;</span></span><br><span class="line">	<span class="keyword">case</span> <span class="string">&quot;gce-windows-bazel&quot;</span>:</span><br><span class="line">		...</span><br><span class="line">	<span class="keyword">default</span>:</span><br><span class="line">		<span class="keyword">return</span> fmt.Errorf(<span class="string">&quot;Unknown build strategy: %v&quot;</span>, b)</span><br><span class="line">	&#125;</span><br><span class="line">   ...</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 執行 make -C kubernetes &lt;target&gt;</span></span><br><span class="line">	<span class="keyword">return</span> control.FinishRunning(exec.Command(<span class="string">&quot;make&quot;</span>, <span class="string">&quot;-C&quot;</span>, util.K8s(<span class="string">&quot;kubernetes&quot;</span>), target))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>到這邊我們已經知道 <code>kubetest --build</code> 執行細節以及 e2e.test 的由來，接下來我們再討論 e2e.test 裡的 Test Suite 以及 Spec 到底是什麼？</p>
+<h4 id="Test-Suite"><a href="#Test-Suite" class="headerlink" title="Test Suite"></a><strong>Test Suite</strong></h4><p>前面有提到 Golang 在執行 <code>go test</code> 時會去找 <code>xxx_test.go</code> 的檔案，並且執行裡面的 <code>Testxxx()</code> 函數。因此當 Ginkgo 執行 e2e.test 時，會找到 <code>kubernetes/test/e2e/e2e_test.go</code> 檔，然後去執行 <code>kubernetes/test/e2e/e2e.go</code> 裡面的 <code>TestE2E()</code> 函數。</p>
+<p><code>kubernetes/test/e2e/e2e_test.go</code></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestE2E</span><span class="params">(t *testing.T)</span></span> &#123;</span><br><span class="line">	RunE2ETests(t)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>TestE2E()</code> 函數會執行 Ginkgo 函數 <code>RunSpec()</code> 來執行所有 Spec，由此可以知道 e2e_test.go 以及 e2e.go 就是 Test Suite 。</p>
+<p><code>kubernetes/test/e2e/e2e.go</code></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">RunE2ETests</span><span class="params">(t *testing.T)</span></span> &#123;</span><br><span class="line">   ...</span><br><span class="line">   ginkgo.RunSpecsWithDefaultAndCustomReporters(t, <span class="string">&quot;Kubernetes e2e suite&quot;</span>, r)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="Specs"><a href="#Specs" class="headerlink" title="Specs"></a><strong>Specs</strong></h4><p>一般來說使用 Ginkgo 來做測試，為了方便 Test Suite 去抓到所有的 Spec ，會在 Test Suite 檔案 Import Spec 的 {ackage (除非 Spec 與 Test Suite 同個 Package )，所以如果直接從 e2e_test.go 以及 e2e.go 去看，就會發現在 e2e_test.go 裡 Import 了所有 E2E Test 用到的 Spec ，可以發現這些測項就是位於 <code>kubernetes/test/e2e/</code> 底下。</p>
+<p><code>kubernetes/test/e2e/e2e_test.go</code></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> e2e</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">   <span class="string">&quot;flag&quot;</span></span><br><span class="line">   ...</span><br><span class="line"></span><br><span class="line">   <span class="comment">// test sources</span></span><br><span class="line">	_ <span class="string">&quot;k8s.io/kubernetes/test/e2e/apimachinery&quot;</span></span><br><span class="line">	_ <span class="string">&quot;k8s.io/kubernetes/test/e2e/apps&quot;</span></span><br><span class="line">	_ <span class="string">&quot;k8s.io/kubernetes/test/e2e/auth&quot;</span></span><br><span class="line">	_ <span class="string">&quot;k8s.io/kubernetes/test/e2e/autoscaling&quot;</span></span><br><span class="line">	_ <span class="string">&quot;k8s.io/kubernetes/test/e2e/cloud&quot;</span></span><br><span class="line">	_ <span class="string">&quot;k8s.io/kubernetes/test/e2e/common&quot;</span></span><br><span class="line">	_ <span class="string">&quot;k8s.io/kubernetes/test/e2e/instrumentation&quot;</span></span><br><span class="line">	_ <span class="string">&quot;k8s.io/kubernetes/test/e2e/kubectl&quot;</span></span><br><span class="line">	_ <span class="string">&quot;k8s.io/kubernetes/test/e2e/lifecycle&quot;</span></span><br><span class="line">	_ <span class="string">&quot;k8s.io/kubernetes/test/e2e/lifecycle/bootstrap&quot;</span></span><br><span class="line">	_ <span class="string">&quot;k8s.io/kubernetes/test/e2e/network&quot;</span></span><br><span class="line">	_ <span class="string">&quot;k8s.io/kubernetes/test/e2e/node&quot;</span></span><br><span class="line">	_ <span class="string">&quot;k8s.io/kubernetes/test/e2e/scheduling&quot;</span></span><br><span class="line">	_ <span class="string">&quot;k8s.io/kubernetes/test/e2e/servicecatalog&quot;</span></span><br><span class="line">	_ <span class="string">&quot;k8s.io/kubernetes/test/e2e/storage&quot;</span></span><br><span class="line">	_ <span class="string">&quot;k8s.io/kubernetes/test/e2e/storage/external&quot;</span></span><br><span class="line">	_ <span class="string">&quot;k8s.io/kubernetes/test/e2e/ui&quot;</span></span><br><span class="line">	_ <span class="string">&quot;k8s.io/kubernetes/test/e2e/windows&quot;</span></span><br><span class="line">)</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>從裡面挑了一個 Spec 來看，可以看到 Spec 格式就是使用 Ginkgo 以及 Gomega 寫出來的。</p>
+<p><code>kubernetes/test/e2e/ui/dashboard.go</code></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> ui</span><br><span class="line">...</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> _ = SIGDescribe(<span class="string">&quot;Kubernetes Dashboard [Feature:Dashboard]&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">	ginkgo.BeforeEach(<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="comment">// TODO(kubernetes/kubernetes#61559): Enable dashboard here rather than skip the test.</span></span><br><span class="line">		framework.SkipIfProviderIs(<span class="string">&quot;gke&quot;</span>)</span><br><span class="line">	&#125;)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">const</span> (</span><br><span class="line">		uiServiceName = <span class="string">&quot;kubernetes-dashboard&quot;</span></span><br><span class="line">		uiAppName     = uiServiceName</span><br><span class="line">		uiNamespace   = metav1.NamespaceSystem</span><br><span class="line"></span><br><span class="line">		serverStartTimeout = <span class="number">1</span> * time.Minute</span><br><span class="line">	)</span><br><span class="line"></span><br><span class="line">	f := framework.NewDefaultFramework(uiServiceName)</span><br><span class="line"></span><br><span class="line">	ginkgo.It(<span class="string">&quot;should check that the kubernetes-dashboard instance is alive&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		ginkgo.By(<span class="string">&quot;Checking whether the kubernetes-dashboard service exists.&quot;</span>)</span><br><span class="line">		err := framework.WaitForService(f.ClientSet, uiNamespace, uiServiceName, <span class="literal">true</span>, framework.Poll, framework.ServiceStartTimeout)</span><br><span class="line">		framework.ExpectNoError(err)</span><br><span class="line"></span><br><span class="line">		ginkgo.By(<span class="string">&quot;Checking to make sure the kubernetes-dashboard pods are running&quot;</span>)</span><br><span class="line">		selector := Labels.SelectorFromSet(Labels.Set(<span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span>&#123;<span class="string">&quot;k8s-app&quot;</span>: uiAppName&#125;))</span><br><span class="line">		err = testutils.WaitForPodsWithLabelRunning(f.ClientSet, uiNamespace, selector)</span><br><span class="line">		framework.ExpectNoError(err)</span><br><span class="line"></span><br><span class="line">		ginkgo.By(<span class="string">&quot;Checking to make sure we get a response from the kubernetes-dashboard.&quot;</span>)</span><br><span class="line">		err = wait.Poll(framework.Poll, serverStartTimeout, <span class="function"><span class="keyword">func</span><span class="params">()</span> <span class="params">(<span class="keyword">bool</span>, error)</span></span> &#123;</span><br><span class="line">			<span class="keyword">var</span> status <span class="keyword">int</span></span><br><span class="line">			proxyRequest, errProxy := e2eservice.GetServicesProxyRequest(f.ClientSet, f.ClientSet.CoreV1().RESTClient().Get())</span><br><span class="line">			<span class="keyword">if</span> errProxy != <span class="literal">nil</span> &#123;</span><br><span class="line">				framework.Logf(<span class="string">&quot;Get services proxy request failed: %v&quot;</span>, errProxy)</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			ctx, cancel := context.WithTimeout(context.Background(), framework.SingleCallTimeout)</span><br><span class="line">			<span class="keyword">defer</span> cancel()</span><br><span class="line"></span><br><span class="line">			<span class="comment">// Query against the proxy URL for the kubernetes-dashboard service.</span></span><br><span class="line">			err := proxyRequest.Namespace(uiNamespace).</span><br><span class="line">				Context(ctx).</span><br><span class="line">				Name(utilnet.JoinSchemeNamePort(<span class="string">&quot;https&quot;</span>, uiServiceName, <span class="string">&quot;&quot;</span>)).</span><br><span class="line">				Timeout(framework.SingleCallTimeout).</span><br><span class="line">				Do().</span><br><span class="line">				StatusCode(&amp;status).</span><br><span class="line">				Error()</span><br><span class="line">			<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">if</span> ctx.Err() != <span class="literal">nil</span> &#123;</span><br><span class="line">					framework.Failf(<span class="string">&quot;Request to kubernetes-dashboard failed: %v&quot;</span>, err)</span><br><span class="line">					<span class="keyword">return</span> <span class="literal">true</span>, err</span><br><span class="line">				&#125;</span><br><span class="line">				framework.Logf(<span class="string">&quot;Request to kubernetes-dashboard failed: %v&quot;</span>, err)</span><br><span class="line">			&#125; <span class="keyword">else</span> <span class="keyword">if</span> status != http.StatusOK &#123;</span><br><span class="line">				framework.Logf(<span class="string">&quot;Unexpected status from kubernetes-dashboard: %v&quot;</span>, status)</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="comment">// Don&#x27;t return err here as it aborts polling.</span></span><br><span class="line">			<span class="keyword">return</span> status == http.StatusOK, <span class="literal">nil</span></span><br><span class="line">		&#125;)</span><br><span class="line">		framework.ExpectNoError(err)</span><br><span class="line">	&#125;)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>此 Spec 是檢查 kubernetes dashboard 是否正常執行</p>
+</blockquote>
+<h4 id="Kind-of-Tests"><a href="#Kind-of-Tests" class="headerlink" title="Kind of Tests"></a><strong>Kind of Tests</strong></h4><p>從前面小節我們得知 Kubernetes E2E Testing 的測項，但是這些測項非常的多，要如何區別這些測項呢? Kubernetes 針對這部份採用了賦予 Label 的方式來區別不同種類的測項。</p>
+<ul>
+<li><code>[Slow]</code> - 執行時間超過兩分鐘的測項。</li>
+<li><code>[Serial]</code> - 需要依序執行，而不能平行執行的測項。</li>
+<li><code>[Disruptive]</code> - 具有破壞性或是會影響其他測試的測項，例如重開機 node ，或是砍掉 <code>kube-system</code> 相關的 pod 等等。</li>
+<li><code>[Internet]</code> - 會需要連到外部網路的測項。</li>
+<li><code>[Conformance]</code> - Conformace Testing 的測項。</li>
+<li><code>[LinuxOnly]</code> - 只能跑在 Linux node 的測項。</li>
+<li><code>[Privileged]</code> - 會需要 privileged container 的測項。</li>
+<li><code>[Alpha]</code> - 測試 Alpha 功能的測項。<br>…</li>
+</ul>
+<p>詳細 Label 資訊可以參考 - <a target="_blank" rel="noopener" href="https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/e2e-tests.md#kinds-of-tests">Kinds of tests</a></p>
+<p>一個測項 ( Spec ) 可以貼上一個或是多個 Label ，貼的位置可以在 <code>SIGDescribe</code> 或是 <code>Ginkgo.It</code> ，如以下範例：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">ginkgo.It(<span class="string">&quot;should provide Internet connection for containers [Feature:Networking-IPv6][Experimental][LinuxOnly]&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="comment">// IPv6 is not supported on Windows.</span></span><br><span class="line">		framework.SkipIfNodeOSDistroIs(<span class="string">&quot;windows&quot;</span>)</span><br><span class="line">		ginkgo.By(<span class="string">&quot;Running container which tries to connect to 2001:4860:4860::8888&quot;</span>)</span><br><span class="line">		framework.ExpectNoError(</span><br><span class="line">			framework.CheckConnectivityToHost(f, <span class="string">&quot;&quot;</span>, <span class="string">&quot;connectivity-test&quot;</span>, <span class="string">&quot;2001:4860:4860::8888&quot;</span>, <span class="number">53</span>, <span class="number">30</span>))</span><br><span class="line">&#125;)</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> _ = SIGDescribe(<span class="string">&quot;Kubernetes Dashboard [Feature:Dashboard]&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">	ginkgo.BeforeEach(<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		framework.SkipIfProviderIs(<span class="string">&quot;gke&quot;</span>)</span><br><span class="line">   &#125;)</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<h4 id="Execute-Specific-Kind-of-Tests"><a href="#Execute-Specific-Kind-of-Tests" class="headerlink" title="Execute Specific Kind of Tests"></a><strong>Execute Specific Kind of Tests</strong></h4><p>在 kubetest 使用上，要過濾或是執行特定的測項，只需要使用 <code>--test_args</code> flag 然後裡面再設定 <code>--ginkgo.focus/skip</code> 就可以了。<code>--test_args</code> 是讓 kubetest 可以使用 Ginkgo CLI 的 flag ，因此不單單可以用 <code>focus/skip</code> ，只要是 Ginkgo CLI 支援的 flag ，基本上都可以使用。<code>focus/skip</code> 可以透過正規表示式來比對 <code>Describe</code> 或是 <code>ginkgo.It</code> 描述裡的 Label。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Only execute tests with LinuxOnly Label.</span></span><br><span class="line">$ kubetest --<span class="built_in">test</span> --test_args=<span class="string">&quot;--ginkgo.focus=\[LinuxOnly\]&quot;</span> --provider <span class="built_in">local</span> --deployment <span class="built_in">local</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Skip the tests with LinuxOnly Label.</span></span><br><span class="line">$ kubetest --<span class="built_in">test</span> --test_args=<span class="string">&quot;--ginkgo.skip=\[LinuxOnly\]&quot;</span> --provider <span class="built_in">local</span> --deployment <span class="built_in">local</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>focus/skip 可以用來比對 Describe 或是 ginkgo.It 描述裡的 Label。</p>
+</blockquote>
+<h4 id="framework-go"><a href="#framework-go" class="headerlink" title="framework.go"></a><strong>framework.go</strong></h4><p><code>kubernetes/test/e2e/framework/framework.go</code> 是用來執行一些 E2E test 會使用到的函數，如後續會提到的 Conformance Testing 就是在 framework.go 裡執行 <code>framework.ConformanceIt()</code> 來做貼 Label 的動作。其餘 framework.go 細節筆者就沒深入去瞭解，因此這部分就不深入解釋。 </p>
+<h2 id="Write-Your-Own-Test"><a href="#Write-Your-Own-Test" class="headerlink" title="Write Your Own Test"></a>Write Your Own Test</h2><p>在了解 kubetest 流程之後，接下來我們來試著撰寫自己的測試。</p>
+<h3 id="Specifications"><a href="#Specifications" class="headerlink" title="Specifications"></a>Specifications</h3><p>Kubernetes Community 在 <a target="_blank" rel="noopener" href="https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/writing-good-e2e-tests.md">Writing good e2e tests for Kubernetes</a> 裡提到一些撰寫測試前需要注意的事項以及一些規範，大致為以下幾項：</p>
+<ul>
+<li><p><strong>Debuggability</strong> : 在寫測試時盡量將所有訊息寫清楚，例如測試失敗時，失敗訊息要寫明確說是哪裡錯誤，不要就含糊的顯示「測試失敗」之類的訊息，必須讓測試人員容易去 Debug 。</p>
+</li>
+<li><p><strong>Ability to run in non-dedicated test clusters</strong> :  不要限定測試只能跑在<code>特定</code>的 Cluster，這裡的意思是撰寫測試時不要有<code>假設</code>的情況，任何測項都要寫清楚。例如：假設這個 Cluster 是乾淨的，上面沒有跑任何服務、假設環境裡已經有 xxx 服務或是假設 Cluster 跑在什麼硬體、環境等等。這裡官方舉了一個例子: 假如今天寫了一個測試「確認你的 Pod 能跑在所有 Node 上」來驗證所有 Node 有沒有問題，這個測項看起來似乎沒問題，但是實際上做了一個「同時間內只有你這個測項跑在 Node 上或是同時間沒有其他服務在 Node 上」的假設。假如你在跑這項測試前， Cluster 正在同時跑其他測試(或是服務)，導致某個 Node 資源被佔滿或是執行到 <code>[Disruptive]</code> 的測項，這樣這個測試就會被影響而失敗，但是他的失敗並不是 Node 本身有問題，而是被其他東西影響，這樣測試出來就會不準確。</p>
+<p> 另外是盡量避免撰寫 <code>[Disruptive]</code> 的測項，我們前面有提到 <code>[Disruptive]</code> 是具破壞性的測項，可能會影響其他測試，例如：重開機、刪掉服務等等。這裡避免的意思一樣是不要假設：「同時間只有你這個測項在測試」，避免影響到其他測試或服務，如果真的要撰寫該類型的測試，一定要加 <code>[Disruptive]</code> Label，並且把測項描述寫清楚。</p>
+<p> 最後是盡量不要使用非 Kubernetes 官方的 API 來做測試，因為這樣測試失敗時很難找出是 API 問題還是 Cluster 問題。</p>
+</li>
+<li><p><strong>Speed of execution</strong> : 在寫測試時，盡量提升測試的效率、壓低測試的時間，不要放一些如 <code>sleep</code> 這種耗時間的函數，如果測試時間會超過兩分鐘以上就加上 <code>[Slow]</code> Label，讓測試者知道這個是比較耗時的測項。</p>
+<p> 另外除了測試花的時間之外，還必須設定好測試失敗的時間，例如：你的測試很簡單只需要兩分鐘內完成，但是可能光是等 Pod Ready 就等超過兩分鐘甚至是 Pod 已經卡住了，如果沒有設定測試失敗的時間 (如10分鐘後就認定測試失敗) ，這個測試就會永遠卡在那。</p>
+</li>
+<li><p><strong>Resilience to relatively rare, temporary infrastructure glitches or delays</strong> : 在寫測試時，要彈性一點，當遇到失敗的情況，多試幾次，有可能只是剛好一些情況導致失敗。舉例來說：你的測項是 「測試 Cluster 能不能跑起來 Nginx 的 Pod 」，有可能第一次在測剛好網路比較不穩， Image 抓比較慢或是抓不下來，導致測試失敗，但是第二次網路就恢復重抓就抓下來了，因此不要在第一次失敗就直接認定測試失敗，過個幾秒再重抓 Image 一次，測試就會正常了。</p>
+<blockquote>
+<p>這裡需要注意的是，雖然說要給測項一些彈性，不過也是要根據你的測項來判斷適不適用。</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="Add-New-Test"><a href="#Add-New-Test" class="headerlink" title="Add New Test"></a>Add New Test</h3><p>了解測試撰寫規範之後，接下來就來實際撰寫測試，以下範例可以從我的 GitHub - <a target="_blank" rel="noopener" href="https://github.com/pohsienshih/kubernetes-e2e-practice">kubernetes-e2e-practice</a> 裡取得，有興趣者，可以載下來測試。</p>
+<blockquote>
+<p>該範例適用於 Kubernetes v1.15.x 版本</p>
+</blockquote>
+<p>在這個範例裡， 我們會撰寫一個小測試驗證是否能在 Cluster 部署一個名為 <code>pohsien</code> 的 Pod ，並確認這個 Pod 是否成功執行起來。</p>
+<ol>
+<li><p>首先在 <code>kubernetes/test/e2e</code> 新增一個 <code>pohsien</code> 資料夾，裡面就是放置我們自己撰寫的測試檔。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ mkdir -c kubernetes/<span class="built_in">test</span>/e2e/pohsien</span><br></pre></td></tr></table></figure></li>
+<li><p>接著撰寫自己的測試，並放置在剛剛建立的 <code>kubernetes/test/e2e/pohsien/</code> 裡面，基本上這邊都是使用 <a target="_blank" rel="noopener" href="https://github.com/kubernetes/client-go">client-go</a> 來操作 Kubernetes 資源。我們定義一個 <code>[Pohsien]</code> Label ，然後把我們的測項貼上這個 Label ，以方便之後執行測試。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ vim kubernetes/<span class="built_in">test</span>/e2e/pohsien/pohsien.go</span><br><span class="line">$ vim kubernetes/<span class="built_in">test</span>/e2e/pohsien/framework.go</span><br></pre></td></tr></table></figure>
+<p> <code>pohsien.go</code></p>
+ <figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> pohsien</span><br><span class="line">...</span><br><span class="line"><span class="keyword">var</span> _ = SIGDescribe(<span class="string">&quot;Kubernetes Pohsien&#x27;s Pod [Pohsien]&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">        f := framework.NewDefaultFramework(<span class="string">&quot;pods&quot;</span>)</span><br><span class="line">        <span class="keyword">var</span> podClient *framework.PodClient</span><br><span class="line">                ginkgo.BeforeEach(<span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">                podClient = f.PodClient()</span><br><span class="line">        &#125;)</span><br><span class="line"></span><br><span class="line">        ginkgo.It(<span class="string">&quot;Make sure the pohsien pod can be deployed&quot;</span>, <span class="function"><span class="keyword">func</span><span class="params">()</span></span>&#123;</span><br><span class="line">            <span class="comment">// 建立 pod </span></span><br><span class="line">            ginkgo.By(<span class="string">&quot;Create Pod&quot;</span>)</span><br><span class="line">            pod := &amp;corev1.Pod&#123;</span><br><span class="line">                        ObjectMeta: metav1.ObjectMeta&#123;</span><br><span class="line">                                Name: <span class="string">&quot;pohsien&quot;</span>,</span><br><span class="line">                                Labels: <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span>&#123;</span><br><span class="line">                                        <span class="string">&quot;name&quot;</span>: <span class="string">&quot;pohsien&quot;</span>,</span><br><span class="line">                                &#125;,</span><br><span class="line">                        &#125;,</span><br><span class="line">                        Spec: corev1.PodSpec&#123;</span><br><span class="line">                                Containers: []corev1.Container&#123;</span><br><span class="line">                                        &#123;</span><br><span class="line">                                                Name:  <span class="string">&quot;nginx&quot;</span>,</span><br><span class="line">                                                Image: <span class="string">&quot;nginx:1.17.3&quot;</span>,</span><br><span class="line">                                        &#125;,</span><br><span class="line">                                &#125;,</span><br><span class="line">                        &#125;,</span><br><span class="line">                &#125;</span><br><span class="line">            podClient.Create(pod)</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 檢查 pod 是否成功運行起來</span></span><br><span class="line">            ginkgo.By(<span class="string">&quot;Get the pod&quot;</span>)</span><br><span class="line">                podGetting, err := podClient.Get(pod.Name, metav1.GetOptions&#123;&#125;)</span><br><span class="line">            framework.ExpectNoError(err, <span class="string">&quot;Failed to get the pod&quot;</span>)</span><br><span class="line">            framework.ExpectNoError(f.WaitForPodRunning(podGetting.Name))</span><br><span class="line">            gomega.Expect(podGetting.Name, <span class="string">&quot;pohsien&quot;</span>)</span><br><span class="line"></span><br><span class="line">        &#125;)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<p> framework.go 是用來宣告 <code>SIGDescribe()</code> 函數，而其他的測試檔會呼叫這個函數並且傳遞相關參數(例如要設定的 Label 以及 Spec 等等），一般來說會在 framework.go 設定一些 Global 的設定或變數，例如幫整個該資料夾的測項貼上對應的 SIG Label。雖然 framework.go 應該不是必要的，但是為了與其他測項一致，因此在此範例我們也新增了 framework.go ，並且加上了我們虛構的 <code>[pohsien-testing]</code> Label 。<br> <code>framework.go</code></p>
+ <figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> pohsien</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">&quot;github.com/onsi/ginkgo&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// SIGDescribe annotates the test with the SIG Label.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">SIGDescribe</span><span class="params">(text <span class="keyword">string</span>, body <span class="keyword">func</span>()</span>) <span class="title">bool</span></span> &#123;</span><br><span class="line">    <span class="keyword">return</span> ginkgo.Describe(<span class="string">&quot;[pohsien-testing] &quot;</span>+text, body)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 由於我們範例只是 Demo 用，因此在這裡並沒有特別嚴謹的指定 Label ，但請記得在撰寫自己的測試時一定要加上對應 Label ，如 <code>[Slow]</code> 、 <code>[Serial]</code> 、 <code>[Disruptive]</code> 等等，這樣可以讓測試人員更加了解你的測項的特性，如果不確定要加上哪些 Label 可以在 slack 或是 發佈 Issue / PR 時，標註 <code>#kinds-of-tests</code> 來詢問。</p>
+</li>
+<li><p>接下來在 <code>kubernetes/test/e2e/e2e_test.go</code> 裡面 Import 我們自己的測項。<br><code>framework.go</code></p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> e2e</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">   <span class="string">&quot;flag&quot;</span></span><br><span class="line">   <span class="string">&quot;fmt&quot;</span></span><br><span class="line">   ...</span><br><span class="line"></span><br><span class="line">   <span class="comment">// test sources</span></span><br><span class="line">   _ <span class="string">&quot;k8s.io/kubernetes/test/e2e/apimachinery&quot;</span></span><br><span class="line">   _ <span class="string">&quot;k8s.io/kubernetes/test/e2e/apps&quot;</span></span><br><span class="line">   ...</span><br><span class="line">   _ <span class="string">&quot;k8s.io/kubernetes/test/e2e/pohsien&quot;</span></span><br><span class="line">)</span><br><span class="line">...</span><br></pre></td></tr></table></figure></li>
+<li><p>接下來撰寫及修改 BUILD 檔來讓 <code>kubetest --build</code> 或是 <code>make</code> 時能抓到我們寫的測試檔。主要有兩個地方: 一個是在 <code>kubernetes/test/e2e/pohsien/</code> 底下新增 BUILD 檔，另一個是在 <code>kubernetes/test/e2e/BUILD</code> 裡加上我們寫的測試檔。</p>
+<blockquote>
+<p>BUILD 檔寫法可以參考其他 E2E 測項。</p>
+</blockquote>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ vim kubernetes/<span class="built_in">test</span>/e2e/pohsien/BUILD</span><br><span class="line">$ vim kubernetes/<span class="built_in">test</span>/e2e/BUILD</span><br></pre></td></tr></table></figure></li>
+<li><p>完成後，接下來我們就可以執行看看。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ kubetest --build</span><br><span class="line">$ kubetest --<span class="built_in">test</span> --test_args=<span class="string">&quot;--ginkgo.focus=\[Pohsien\]&quot;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">[pohsien-testing] Kubernetes Pohsien<span class="string">&#x27;s Pod [Pohsien]</span></span><br><span class="line"><span class="string">Make sure the pohsien pod can be deployed</span></span><br><span class="line"><span class="string">/root/go/src/k8s.io/kubernetes/_output/local/go/src/k8s.io/kubernetes/test/e2e/pohsien/pohsien.go:35</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="string">STEP: Create Pod</span></span><br><span class="line"><span class="string">STEP: Get the pod</span></span><br><span class="line"><span class="string">[AfterEach] [pohsien-testing] Kubernetes Pohsien&#x27;</span>s Pod [Pohsien]</span><br><span class="line">  /root/go/src/k8s.io/kubernetes/_output/<span class="built_in">local</span>/go/src/k8s.io/kubernetes/<span class="built_in">test</span>/e2e/framework/framework.go:151</span><br><span class="line">Oct 25 09:33:54.652: INFO: Waiting up to 3m0s <span class="keyword">for</span> all (but 0) nodes to be ready</span><br><span class="line">STEP: Destroying namespace <span class="string">&quot;pods-1457&quot;</span> <span class="keyword">for</span> this suite.</span><br><span class="line">Oct 25 09:34:16.682: INFO: Waiting up to 30s <span class="keyword">for</span> server preferred namespaced resources to be successfully discovered</span><br><span class="line">Oct 25 09:34:16.740: INFO: namespace pods-1457 deletion completed <span class="keyword">in</span> 22.085125288s</span><br><span class="line">Oct 25 09:34:16.742: INFO: Running AfterSuite actions on all nodes</span><br><span class="line">Oct 25 09:34:16.742: INFO: Running AfterSuite actions on node 1</span><br><span class="line"></span><br><span class="line">Ran 1 of 4414 Specs <span class="keyword">in</span> 28.369 seconds</span><br><span class="line">SUCCESS! -- 1 Passed | 0 Failed | 0 Pending | 4413 Skipped</span><br><span class="line">PASS</span><br><span class="line"></span><br><span class="line">Ginkgo ran 1 suite <span class="keyword">in</span> 29.513161526s</span><br><span class="line">Test Suite Passed</span><br><span class="line">2019/10/25 09:34:16 process.go:155: Step <span class="string">&#x27;./hack/ginkgo-e2e.sh --ginkgo.focus=\[Pohsien\]&#x27;</span> finished <span class="keyword">in</span> 29.787466628s</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<p>到這裡 Kubernetes E2E Testing 解釋就告一段落，下一篇文章會介紹如何在自己建立的 Cluster 做 E2E Test 。</p>
+<h2 id="References"><a href="#References" class="headerlink" title="References"></a>References</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://www.softwaretestinghelp.com/types-of-software-testing/">Types Of Software Testing: Different Testing Types With Details</a></li>
+<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Special_Interest_Group">WIKIPEDIA - Special Interest Group</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/kubernetes/community/blob/master/sig-list.md">Kubernetes SIGs and Working Groups</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/kubernetes/community/blob/master/governance.md">Kubernetes Community Governance Model</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/kubernetes/community/blob/master/sigs.yaml">Subprojects of each SIGs</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/kubernetes/community/tree/master/sig-testing#testing-special-interest-group">Sig-Testing</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/kubernetes/test-infra">test-infra</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/e2e-tests.md">Kubernetes E2E Testing</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/kubernetes/test-infra/tree/master/kubetest">Kubetest</a></li>
+<li><a target="_blank" rel="noopener" href="https://onsi.github.io/ginkgo/">Ginkgo</a></li>
+<li><a target="_blank" rel="noopener" href="http://onsi.github.io/gomega/">Gomega</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/e2e-tests.md">End-To-End Testing in Kubernetes</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/writing-good-e2e-tests.md">Writing good e2e tests for Kubernetes</a></li>
+</ol>
+<div class="note info"><p>文章內容的轉載、重製、發佈，請註明出處: <a href="https://pohsienshih.github.io/">https://pohsienshih.github.io</a></p>
+</div>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/kubernetes/" rel="tag"># kubernetes</a>
+              <a href="/tags/testing/" rel="tag"># testing</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/ELK-Filebeat-With-Log-Rotate/" rel="prev" title="ELK Filebeat With Log Rotate">
+                  <i class="fa fa-chevron-left"></i> ELK Filebeat With Log Rotate
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/E2E-Testing-for-Kubernetes-Part-II/" rel="next" title="End-to-End Testing for Kubernetes (Part II) - Conformance Testing">
+                  End-to-End Testing for Kubernetes (Part II) - Conformance Testing <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Pohsien Shih</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

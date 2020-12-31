@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-pohsien/favicon-32x32-pohsien.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-pohsien/favicon.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"pohsienshih.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":true}};
+  </script>
+<meta name="description" content="這篇主要是補上今年3月份參加iThome資安大會的一些筆記跟小小心得。今年的資安大會與往年一樣都在台北國際會議中心舉辦，不過由於我第一天有事情，因此今年只有參加到後面兩天，挺可惜的，不過後面兩天也蠻多精彩的演講(雖然大部分還是推銷產品居多)，以下就是我的一些小小筆記，如果想暸解更細部的話，目前簡報已經都釋出在官網上了，可以去參考～ 議程: https:&#x2F;&#x2F;cyber.ithome.com.tw&#x2F;a">
+<meta property="og:type" content="article">
+<meta property="og:title" content="2019 iThome資安大會筆記">
+<meta property="og:url" content="https://pohsienshih.github.io/2019/2019-iThome-Cyber-Sec-Notes/index.html">
+<meta property="og:site_name" content="Pohsien Workspace">
+<meta property="og:description" content="這篇主要是補上今年3月份參加iThome資安大會的一些筆記跟小小心得。今年的資安大會與往年一樣都在台北國際會議中心舉辦，不過由於我第一天有事情，因此今年只有參加到後面兩天，挺可惜的，不過後面兩天也蠻多精彩的演講(雖然大部分還是推銷產品居多)，以下就是我的一些小小筆記，如果想暸解更細部的話，目前簡報已經都釋出在官網上了，可以去參考～ 議程: https:&#x2F;&#x2F;cyber.ithome.com.tw&#x2F;a">
+<meta property="og:locale">
+<meta property="article:published_time" content="2019-05-26T15:17:07.000Z">
+<meta property="article:modified_time" content="2020-12-31T09:05:50.830Z">
+<meta property="article:author" content="Pohsien Shih">
+<meta property="article:tag" content="conference">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://pohsienshih.github.io/2019/2019-iThome-Cyber-Sec-Notes/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'default'
+  };
+</script>
+<title>2019 iThome資安大會筆記 | Pohsien Workspace</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-150934951-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-150934951-1');
+      }
+    </script>
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Pohsien Workspace</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Cloud Native, Network, Security, etc.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#3-20"><span class="nav-number">1.</span> <span class="nav-text">3&#x2F;20</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Keynote-%E6%AD%A3%E9%9D%A2%E8%BF%8E%E6%88%B0%E5%85%A7%E9%83%A8%E5%A8%81%E8%84%85%EF%BC%8C%E5%85%AC%E5%8F%B8%E8%A2%AB%E5%AE%B3%E9%82%84%E6%98%AF%E5%93%A1%E5%B7%A5%E8%A2%AB%E9%A7%AD"><span class="nav-number">1.1.</span> <span class="nav-text">Keynote 正面迎戰內部威脅，公司被害還是員工被駭?!</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Cyberlab-%E8%B6%A8%E5%8B%A2%E7%A7%91%E6%8A%80-Target-ransom"><span class="nav-number">1.2.</span> <span class="nav-text">Cyberlab 趨勢科技 Target ransom</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Android-%E6%83%A1%E6%84%8F%E7%A8%8B%E5%BC%8F%E5%8B%95%E6%85%8B%E8%A7%A3%E6%AE%BC%E7%A0%94%E7%A9%B6"><span class="nav-number">1.3.</span> <span class="nav-text">Android 惡意程式動態解殼研究</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B3%87%E8%A8%8A%E5%AE%89%E5%85%A8%E4%B8%AD%E7%9A%84%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E5%B0%8D%E6%8A%97"><span class="nav-number">1.4.</span> <span class="nav-text">資訊安全中的人工智能對抗</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A7%AD%E5%AE%A2%E5%A6%82%E4%BD%95%E5%88%A9%E7%94%A8%E5%85%AC%E9%96%8B%E5%B7%A5%E5%85%B7%E5%9C%A8%E5%85%A7%E9%83%A8%E7%B6%B2%E8%B7%AF%E4%B8%AD%E6%9A%A2%E8%A1%8C%E7%84%A1%E9%98%BB"><span class="nav-number">1.5.</span> <span class="nav-text">駭客如何利用公開工具在內部網路中暢行無阻</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-21"><span class="nav-number">2.</span> <span class="nav-text">3&#x2F;21</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#KEYNOTE%E3%80%90Live-Demo%E3%80%91%E5%B7%A5%E6%A5%AD%E6%8E%A7%E5%88%B6-Testbed-%E8%88%87%E8%B3%87%E5%AE%89%E6%94%BB%E9%98%B2%E7%A0%94%E7%A9%B6"><span class="nav-number">2.1.</span> <span class="nav-text">KEYNOTE【Live Demo】工業控制 Testbed 與資安攻防研究</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#KEYNOTE%E5%96%84%E7%94%A8%E9%A7%AD%E5%AE%A2%E6%80%9D%E7%B6%AD%EF%BC%9A%E5%A6%82%E4%BD%95%E8%81%AF%E5%90%88%E7%99%BD%E5%B8%BD%E9%A7%AD%E5%AE%A2%E5%85%B1%E5%90%8C%E5%8A%A0%E5%BC%B7%E8%B3%87%E5%AE%89%E9%98%B2%E7%A6%A6%E8%83%BD%E9%87%8F"><span class="nav-number">2.2.</span> <span class="nav-text">KEYNOTE善用駭客思維：如何聯合白帽駭客共同加強資安防禦能量</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B3%87%E5%AE%89%E8%84%AB%E5%8F%A3%E7%A7%80"><span class="nav-number">2.3.</span> <span class="nav-text">資安脫口秀</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AA%81%E7%A0%B4%E5%9B%B0%E5%A2%83%EF%BC%9A%E8%B3%87%E5%AE%89%E9%96%8B%E6%BA%90%E5%B7%A5%E5%85%B7%E4%B9%8B%E6%87%89%E7%94%A8%E5%88%86%E4%BA%AB"><span class="nav-number">2.4.</span> <span class="nav-text">突破困境：資安開源工具之應用分享</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E5%AF%86-HTTPS-%E9%9B%B2%E7%AB%AF%E6%9C%8D%E5%8B%99%E7%9A%84%E7%BE%8E%E9%BA%97%E8%88%87%E5%93%80%E6%84%81-%E5%81%B4%E9%8C%84-%E5%82%99%E4%BB%BD-%E9%98%B2%E6%AF%92-%E7%A8%BD%E6%A0%B8"><span class="nav-number">2.5.</span> <span class="nav-text">解密 HTTPS 雲端服務的美麗與哀愁: 側錄 &#x2F; 備份 &#x2F; 防毒 &#x2F; 稽核</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BB%A0%E5%95%86-%E5%8F%AA%E6%9C%89%E9%83%A8%E5%88%86"><span class="nav-number">3.</span> <span class="nav-text">廠商(只有部分)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B6%E9%A4%98%E5%AD%B8%E7%BF%92"><span class="nav-number">4.</span> <span class="nav-text">其餘學習</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Pohsien Shih"
+      src="/images/pohsien.jpg">
+  <p class="site-author-name" itemprop="name">Pohsien Shih</p>
+  <div class="site-description" itemprop="description">System Engineer</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/pohsienshih" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;pohsienshih" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:pohsien324@gmail.com" title="E-Mail → mailto:pohsien324@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      相關連結
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://k2r2bai.com/" title="https:&#x2F;&#x2F;k2r2bai.com&#x2F;" rel="noopener" target="_blank">凱仁大大</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.hwchiu.com/" title="https:&#x2F;&#x2F;www.hwchiu.com&#x2F;" rel="noopener" target="_blank">邱牛大大</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.pichuang.com.tw/" title="https:&#x2F;&#x2F;blog.pichuang.com.tw&#x2F;" rel="noopener" target="_blank">小飛機</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.facebook.com/groups/cloudnative.tw/" title="https:&#x2F;&#x2F;www.facebook.com&#x2F;groups&#x2F;cloudnative.tw&#x2F;" rel="noopener" target="_blank">CNTUG</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://yylin1.github.io/" title="https:&#x2F;&#x2F;yylin1.github.io&#x2F;" rel="noopener" target="_blank">義洋</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://medium.com/@b02310043" title="https:&#x2F;&#x2F;medium.com&#x2F;@b02310043" rel="noopener" target="_blank">莫阿兆</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="default">
+    <link itemprop="mainEntityOfPage" href="https://pohsienshih.github.io/2019/2019-iThome-Cyber-Sec-Notes/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/pohsien.jpg">
+      <meta itemprop="name" content="Pohsien Shih">
+      <meta itemprop="description" content="System Engineer">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Pohsien Workspace">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          2019 iThome資安大會筆記
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-05-26 23:17:07" itemprop="dateCreated datePublished" datetime="2019-05-26T23:17:07+08:00">2019-05-26</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2020-12-31 17:05:50" itemprop="dateModified" datetime="2020-12-31T17:05:50+08:00">2020-12-31</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Security/" itemprop="url" rel="index"><span itemprop="name">Security</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>這篇主要是補上今年3月份參加iThome資安大會的一些筆記跟小小心得。今年的資安大會與往年一樣都在台北國際會議中心舉辦，不過由於我第一天有事情，因此今年只有參加到後面兩天，挺可惜的，不過後面兩天也蠻多精彩的演講(雖然大部分還是推銷產品居多)，以下就是我的一些小小筆記，如果想暸解更細部的話，目前簡報已經都釋出在官網上了，可以去參考～</p>
+<p>議程: <a target="_blank" rel="noopener" href="https://cyber.ithome.com.tw/agenda">https://cyber.ithome.com.tw/agenda</a></p>
+<a id="more"></a>
+<h2 id="3-20"><a href="#3-20" class="headerlink" title="3/20"></a>3/20</h2><h3 id="Keynote-正面迎戰內部威脅，公司被害還是員工被駭"><a href="#Keynote-正面迎戰內部威脅，公司被害還是員工被駭" class="headerlink" title="Keynote 正面迎戰內部威脅，公司被害還是員工被駭?!"></a>Keynote 正面迎戰內部威脅，公司被害還是員工被駭?!</h3><ul>
+<li>「研發部門是企業命脈，卻最難管理」，鎖太多權限可能導致開發人員沒辦法安裝套件或是一些撰寫的一些程式功能無法執行，但是開發人員有可能會藉由一些方式(如IDE)，使用看起來合法的操作來將企業資料攜出。</li>
+<li>為了避免這樣，精品科技開發的產品能夠讓IT人員針對特定IDE去所權限，例如可以設定visual code所執行的CMD沒辦法用來上網或是沒辦法執行敏感指令(copy &amp; paste)，正常情況下的CMD沒事，但是只要是從IDE叫出來的CMD就鎖權限。另外也可擋掉IDE上面的code在執行某些敏感的動作。</li>
+<li>除了IDE以外，另外也可以限制如Office這種軟體，權限可以設定的很彈性，例如可以設定只能把文字從外部複製貼上到Word，但是不能從Word把資料複製出來等。</li>
+<li>原理推測是透過在端點執行Agent直接去對Windows底層的API去做阻擋，因為不管什麼操作都還是要靠Windows 底層的API來完成，因此直接去鎖底層就可以達到這樣的管理。</li>
+</ul>
+<h3 id="Cyberlab-趨勢科技-Target-ransom"><a href="#Cyberlab-趨勢科技-Target-ransom" class="headerlink" title="Cyberlab 趨勢科技 Target ransom"></a>Cyberlab 趨勢科技 Target ransom</h3><ul>
+<li>實機課程，由於禁止將講義跟參考資料帶出，因此只能簡單概述實機內容。</li>
+<li>現在勒鎖軟體已經不一定要使用一些非法的程式，許多駭客已經開始使用「正當合法軟體」來作加密的動作(如winrar)，這樣可以避免防毒的偵測。</li>
+<li>一般企業中勒鎖病毒都以為只要把中的那台還原或是把資料從備份倒回來就好，但是這樣治標不治本，因為駭客還是存在公司裡，也許他是透過內網裡某台跳板機來攻擊目標，但往往IT人員都只會把焦點放在被攻擊的目標上，以為是那台被駭。要如何追查APT攻擊怎麼造成的對於IT人員來說是非常的困難，透過趨勢科技的APEX產品，就可以幫助IT人員方便的查找問題。</li>
+<li>實機操作就是試著扮演駭客透過跳板機去打下AD Server，然後再試著扮演網管人員去追查攻擊流程。</li>
+</ul>
+<p>學員扮演角色：駭客</p>
+<p><strong>Step 1:</strong> 首先連到企業的一個網站</p>
+<p><strong>Step 2:</strong> 透過聯絡我們上傳照片功能，上傳Webshell到網站。</p>
+<p><strong>Step 3:</strong> 直接在網站上執行Webshell，新增一個使用者並提權為管理者，然後了解一下Web Server相關資訊(hostname、Web server version…)</p>
+<p><strong>Step 4:</strong> 發現Web Server是Windows Server IIS。</p>
+<p><strong>Step 5:</strong> 嘗試能不能遠端桌面，不能，可能是防火牆擋住或是沒開RDP功能。</p>
+<p><strong>Step 6:</strong> 透過Web shell關閉防火牆功能以及開啟RDP</p>
+<p><strong>Step 7:</strong> 在測試一次遠端桌面，成功進到Web Server。</p>
+<p><strong>Step 8:</strong> 接著要使用procdump跟駭客工具minikatz來取得Web Server上跑的服務的使用者帳密。</p>
+<p><strong>Step 9:</strong> 由於minikatz會被大部分防毒給擋掉，因此不能直接就把minikatz上傳到Web Server，因此這裡只上傳procdump。</p>
+<p><strong>Step 10:</strong> procdump是合法的軟體，就是把process dump出來，因此在Web Server上執行沒問題，我們直接將proces資訊dump吃來，然後把Output傳到駭客的電腦。</p>
+<p><strong>Step 11:</strong> 在駭客電腦執行minikatz分析process dump結果，成功發現kerberos帳號密碼以及服務IP(AD Server)。</p>
+<p><strong>Step 12:</strong> 測試看看能不能直接透過網路芳鄰輸入IP位置跟帳號密碼連到AD Server的admin$目錄，發現可以成功到admin$目錄。</p>
+<p><strong>Step 12:</strong> 將預寫好的勒鎖軟體上傳到Web Server，由於是透過winrar去加密程式，因此不怕防毒偵測。</p>
+<p><strong>Step 13:</strong> 在Web Server執行勒鎖軟體，加密AD Server admin$資料夾。</p>
+<p><strong>Step 14:</strong> 加密完成，AD Server服務已停止。</p>
+<p>學員扮演角色：IT人員</p>
+<p><strong>Step 1:</strong> 發現AD Server被加密，要開始查找問題是怎麼發生的。</p>
+<p><strong>Step 2:</strong> 連入趨勢科技的產品Apex Web GUI來查找問題。</p>
+<p><strong>Step 3:</strong> 首先先隨便在AD Server找一個被加密的檔案名稱，然後透過檔案名稱去搜尋。</p>
+<p><strong>Step 4:</strong> APEX找出這個檔案存在於哪一台主機(AD Server)，以及他的LOG，透過LOG可以看到他是被什麼Windows指令加密的(rar.exe -df &lt;加密檔名&gt; &lt;原檔名稱&gt; -p&lt;加密的密碼&gt;)還有是哪個使用者帳號執行的、從哪個檔案執行的以及執行時間，看到加密的密碼，網管人員可以松一口氣，表示至少可以還原檔案了。</p>
+<p><strong>Step 5:</strong> APEX上可以使用LOG產出Root Cause Analysis(RCA)圖，類似關聯圖。關聯圖上面顯示跟那段指令有相關的檔案:</p>
+<figure class="highlight xl"><table><tr><td class="code"><pre><span class="line">P<span class="function"><span class="title">sExec</span>.exe -&gt;</span> <span class="function"><span class="title">encrypt</span>.exe -&gt;</span> <span class="function"><span class="title">cmd</span>.exe -&gt;</span> <span class="function"><span class="title">rar</span>.exe -&gt;</span> &lt;被加密的檔案&gt;</span><br></pre></td></tr></table></figure>
+<p>從關聯圖可以看出，有人透過PsExec程式來從別台主機遠端在AD Server上執行encrypt.exe作加密的動作。</p>
+<p><strong>Step 6:</strong> 接下來要找哪一台主機的log有encrypt.exe這個檔案的紀錄。一樣到APEX GUI透過檔名搜尋</p>
+<p><strong>Step 7:</strong> 突然搜到除了AD Server以外，還有一台WEB Server一樣有執行這個檔案的紀錄(這個是執行紀錄，就算檔案刪掉也沒用，刪掉的指令也一樣完全都會被記錄進來)，另外還發現是WEB Server奇怪的帳號(剛剛駭客用webshell新增的使用者，一樣駭客刪掉使用者也沒有用，因為一舉一動都被記錄下來)執行encrypt.exe的。</p>
+<p><strong>Step 8:</strong> 產出RCA圖，可以看到encrypt.exe的原檔名</p>
+<figure class="highlight xl"><table><tr><td class="code"><pre><span class="line">E<span class="function"><span class="title">xplorer</span>.exe -&gt;</span> <span class="function"><span class="title">randsom</span>.exe(原檔名) -&gt;</span> P<span class="function"><span class="title">sExec</span>.exe -&gt;</span> <span class="function"><span class="title">encrypt</span>.exe -&gt;</span> <span class="function"><span class="title">cmd</span>.exe -&gt;</span> ...</span><br></pre></td></tr></table></figure>
+<p>可以看到Explorer.exe執行randsom.exe，因此可以推斷WEB Server就是源頭也就是跳板機。</p>
+<p><strong>Step 9:</strong> 回到APEX WEB GUI，以主機為單位，直接去叫出WEB Server上在這段期間執行所有的動作，因此駭客所做的每一步都直接顯示在頁面上(用webshell執行的所有動作)。</p>
+<p><strong>Step 10:</strong> 結束。</p>
+<p><strong>心得:</strong><br>APEX與前面keynote的原理一樣，一樣要在企業的所有機器裝Agent，這個Agent就是趨勢科技的防毒軟體，只是如果要採用agent收集功能，要加授權就可以，這個Agent一樣會去hook windows底層的API，所以每一步驟都完全被記錄下來，駭客要關掉Agent是非常困難的，Agent會用密碼加密，且可能會被設定為唯獨，因此可能不會受勒鎖軟體影響。這個agent會完全沒有隱私，但PC所有的一舉一動都會記錄下來，所以以前常聽到的駭客入侵後要清除足跡，在這種情況下幾乎是完全不管用的，因為就連『清除』這個動作也會被記錄起來。</p>
+<h3 id="Android-惡意程式動態解殼研究"><a href="#Android-惡意程式動態解殼研究" class="headerlink" title="Android 惡意程式動態解殼研究"></a>Android 惡意程式動態解殼研究</h3><ul>
+<li>一般來說Android開發者會對程式碼進行加殼，來防止反編譯。</li>
+<li>加殼方法：<ul>
+<li>混淆Code(缺點是標準API不能混淆)</li>
+<li>Dex文件加密</li>
+<li>Header修改</li>
+<li>Dex data加密</li>
+<li>Method動態加解密</li>
+<li>VMP (Virtual Protect)</li>
+</ul>
+</li>
+<li>有些開發者會先把code加密，然後故意把不重要的檔案做混淆，讓反編譯的人以為混淆的檔案就是code，然後花心力在處理混淆，殊不知真正的code被加密放在別的地方。</li>
+</ul>
+<h3 id="資訊安全中的人工智能對抗"><a href="#資訊安全中的人工智能對抗" class="headerlink" title="資訊安全中的人工智能對抗"></a>資訊安全中的人工智能對抗</h3><ul>
+<li><p>近年來大家很流行使用Machine Learning來training model去對資安攻擊做偵測，但是也衍伸了一種針對Machine Learning Model進行攻擊的「Adversarial Machine Learning」(AML)。</p>
+</li>
+<li><p>AML是去欺騙Model，使用混淆或是污染的方式來攻擊弄壞Model。例如：Model可以分出狗跟貓，但假如說駭客做一個像貓又像狗的照片(自然界不存在，也就是非正常的Data)，然後餵給Model，Model可能就會造成誤判。另外一種方式是圖片是狗，但是某一個pixel故意放烤麵包機，以人的肉眼來看看不出來，但是Model在判別時，就會造成錯誤，可能會誤判。</p>
+</li>
+<li><p>除圖像的以外，垃圾郵件的偵測也可以使用AML，例如在垃圾郵件裡面故意塞一段正常文字，Model可能就會以為這是正常的郵件。或是郵件裡面的某些文字故意換成同義詞，這樣可能也可以繞過垃圾郵件判別。</p>
+</li>
+<li><p>絕大部分的Model都不太可能百分之百不被騙或是混淆，如果一個Model完全不會被混淆，那個Model也沒有AML的價值。</p>
+</li>
+<li><p>AML攻擊手法可以分成兩種：</p>
+<ul>
+<li>Evasion Attack: 製作特製的data來騙或繞過Model，又可分成黑箱跟白箱，黑箱是駭客不知道Model長怎樣，只能不斷透過Output去猜測，白箱是指駭客已經事先了解Model規則。</li>
+<li>Poision Attack: 去破壞Model，例如有些chat bot採用online traing機制，一邊聊天一邊學，但只要一直餵給他特定的data，就可以讓Model壞掉，學奇怪的東西或是誤判。</li>
+</ul>
+</li>
+<li><p>防禦方式：</p>
+<ul>
+<li>Evasion Attack: 駭客一定要有方法去試Model Output，因此只要偵測是否有人在短時間內大量測試或是人工簡單看一下是否有不尋常非自然得data，如果有就BAN掉。</li>
+<li>Model retrain：一但發現Model分析資料不準，就馬上修正Model並重新training。retrain又可分成主動式跟被動式，主動式是企業內部red/blue team主動去攻擊Model，然後修正Model。被動是等被攻擊了，才Retrain。</li>
+</ul>
+</li>
+</ul>
+<h3 id="駭客如何利用公開工具在內部網路中暢行無阻"><a href="#駭客如何利用公開工具在內部網路中暢行無阻" class="headerlink" title="駭客如何利用公開工具在內部網路中暢行無阻"></a>駭客如何利用公開工具在內部網路中暢行無阻</h3><p>iThome報導 -<br><a target="_blank" rel="noopener" href="https://www.ithome.com.tw/news/129486?fbclid=IwAR2rBpZx6r-fWXgmsTupgUrzkWsOiCunvCleq5oyfONtz6zyd3aQ1Zr1Abg">https://www.ithome.com.tw/news/129486?fbclid=IwAR2rBpZx6r-fWXgmsTupgUrzkWsOiCunvCleq5oyfONtz6zyd3aQ1Zr1Abg</a></p>
+<ul>
+<li>紅隊演練 vs 滲透測試<ul>
+<li>紅隊演練：駭客思維出發、全面且廣泛、目的是竊取企業資料</li>
+<li>滲透測試：在特定範圍、針對特定目標、目的是挖掘系統漏洞</li>
+</ul>
+</li>
+<li>攻擊鍊:<figure class="highlight clean"><table><tr><td class="code"><pre><span class="line">目標偵查 -&gt; 武器研製 -&gt; 發動攻擊 -&gt; 維持控制 -&gt; 內網滲透 -&gt; 偷取資料</span><br></pre></td></tr></table></figure></li>
+<li>目標偵查: Recon-Ng工具</li>
+<li>武器研製: Metasploit(產生惡意巨集文件)</li>
+<li>維持控制：安裝後門</li>
+<li>內網滲透： BloodHound(能夠將AD Server網域內的元件以圖性化顯示並且提供攻擊路徑)、Responder(針對LLMNR或NBT-NS,MDNS謝進行poisoning attack)</li>
+<li>偷取資料：dnscat2(DNS Tunnel)、icmpsh(ICMP Tunnel)。</li>
+<li>防禦方對策<ul>
+<li>研究公開工具，將其特徵加入資安產品</li>
+<li>禁止不安全的巨集或是不常見的腳本運行(hta,vbs…)。</li>
+<li>使用公開工具掃網路環境開啟服務並關閉未使用的功能。</li>
+<li>檢視不安全的ACL配置</li>
+<li>檢視DNS伺服器的解析方式 </li>
+</ul>
+</li>
+</ul>
+<h2 id="3-21"><a href="#3-21" class="headerlink" title="3/21"></a>3/21</h2><h3 id="KEYNOTE【Live-Demo】工業控制-Testbed-與資安攻防研究"><a href="#KEYNOTE【Live-Demo】工業控制-Testbed-與資安攻防研究" class="headerlink" title="KEYNOTE【Live Demo】工業控制 Testbed 與資安攻防研究"></a>KEYNOTE【Live Demo】工業控制 Testbed 與資安攻防研究</h3><ul>
+<li>近幾年工業製造的資安問題也慢慢開始被重視。</li>
+<li>講者現場Demo一個模擬火車環境，駭客入侵鐵道管理系統，然後將火車引導到斷軌的地方。</li>
+<li>攻擊手法為：<figure class="highlight clean"><table><tr><td class="code"><pre><span class="line">滲透至內網-&gt; 中間人攻擊 -&gt; 封包側錄或解析 -&gt; 串改封包或是發放假封包給控制端</span><br></pre></td></tr></table></figure></li>
+<li>台灣工控設備有10546個暴露於網際網路(具有真實調查資料)，且大部分都是走HTTP協定，非常不安全，暴露的產業有能源業、大專院校、政府機關、停車場業者、鋼鐵製造業、飯店大夏管理等。</li>
+<li>工業控制網路防護自我健康檢查<ol>
+<li>資產盤點：<ul>
+<li>是否已辨識關鍵基礎設施？</li>
+<li>是否進行風險管理與評估？</li>
+<li>使否檢視網段劃分與工業控制網路邊界？</li>
+<li>是否檢視網路架構設計邏輯？</li>
+</ul>
+</li>
+<li>ICS系統帳號管理：<ul>
+<li>是否制定帳號鎖定、管理政策？</li>
+<li>是否查找、刪除任何預設的特權帳號及密碼？</li>
+<li>是否要求使用強密碼和多因素身份驗證？</li>
+<li>是否限制特權帳號數量？尤其第三方供應商</li>
+<li>是否要求OT場域人員定期更換密碼</li>
+</ul>
+</li>
+<li>OT網路隔離性(ioslate)檢視<ul>
+<li>是否可以直接由網際網路存取ICS？</li>
+<li>是否可以直接由IT網路存取ICS?</li>
+<li>是否有嚴謹之傘端存取管理政策？</li>
+<li>防火牆是否已隔離所有需保護的ICS網路和設備。</li>
+</ul>
+</li>
+</ol>
+</li>
+</ul>
+<h3 id="KEYNOTE善用駭客思維：如何聯合白帽駭客共同加強資安防禦能量"><a href="#KEYNOTE善用駭客思維：如何聯合白帽駭客共同加強資安防禦能量" class="headerlink" title="KEYNOTE善用駭客思維：如何聯合白帽駭客共同加強資安防禦能量"></a>KEYNOTE善用駭客思維：如何聯合白帽駭客共同加強資安防禦能量</h3><ul>
+<li>紅隊演練不應該事先告知，且紅隊會一直學習新的攻擊技術，增強攻擊能力，這樣可以考驗藍隊的應對處理機制。</li>
+<li>企業產品安全保護方式(按照順序)：<ol>
+<li>Code &amp; architecture review: 針對工程師或是員工上風險評估以及資訊安全概念的相關課程。工程師內部針對code去做review，看有沒有安全風險。</li>
+<li>動＆靜態程式測試</li>
+<li>紅隊演練：企業內部團隊找漏洞。</li>
+<li>開啟Bug Bounty：讓全世界的白帽駭客一起來找漏洞。</li>
+</ol>
+</li>
+<li>紅隊演練的好處：<ul>
+<li>能夠讓企業了解產品的弱點及漏洞面向。</li>
+<li>能夠讓藍隊增強企業安全的防守。</li>
+<li>允許管理層衡量安全解決方案的投資。</li>
+<li>能夠增加攻擊的成本，讓駭客攻擊更加困難。</li>
+</ul>
+</li>
+</ul>
+<h3 id="資安脫口秀"><a href="#資安脫口秀" class="headerlink" title="資安脫口秀"></a>資安脫口秀</h3><ul>
+<li>甲方不應該看哪家廠商設備數字或成績漂亮就選擇他，應該是根據自身需要來選擇，可以整理近幾年公司遇到的資安事件，然後再跟乙方做討論，這樣才能選擇到公司可用的解決方案。</li>
+</ul>
+<h3 id="突破困境：資安開源工具之應用分享"><a href="#突破困境：資安開源工具之應用分享" class="headerlink" title="突破困境：資安開源工具之應用分享"></a>突破困境：資安開源工具之應用分享</h3><ul>
+<li>簡報 -<br><a target="_blank" rel="noopener" href="https://www.slideshare.net/jasoncheng7115/20190321-137504140?fbclid=IwAR26IO1-XOw_0xPIX2jPZB859H2B9XC8Xt35WxO0EZVvx9yEW6ZL7TTYST8">https://www.slideshare.net/jasoncheng7115/20190321-137504140?fbclid=IwAR26IO1-XOw_0xPIX2jPZB859H2B9XC8Xt35WxO0EZVvx9yEW6ZL7TTYST8</a></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>開源工具</th>
+<th>解決方案</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Proxmox</td>
+<td>開源伺服器虛擬化管理平台</td>
+</tr>
+<tr>
+<td>LibreNMS</td>
+<td>開源裝置與服務狀態監視</td>
+</tr>
+<tr>
+<td>Open-audIT</td>
+<td>開源IT資產管理系統</td>
+</tr>
+<tr>
+<td>Graylog</td>
+<td>開源事件記錄管理與分析</td>
+</tr>
+<tr>
+<td>FreeNAS</td>
+<td>開源儲存伺服器系統</td>
+</tr>
+<tr>
+<td>Duplicati</td>
+<td>開源資料備份系統</td>
+</tr>
+<tr>
+<td>PacketFence</td>
+<td>開源網路存取控制系統</td>
+</tr>
+<tr>
+<td>WSO2 IoT</td>
+<td>開源行動裝置管理(MDM BYOD管理)</td>
+</tr>
+<tr>
+<td>OpenVAS</td>
+<td>開源弱點檢測管理平台</td>
+</tr>
+<tr>
+<td>MobSF</td>
+<td>開源APP安全測試平台</td>
+</tr>
+<tr>
+<td>SonarQube</td>
+<td>開源程式碼檢測平台</td>
+</tr>
+<tr>
+<td>Proxmox MG</td>
+<td>開源郵件閘道伺服器</td>
+</tr>
+</tbody></table>
+<ul>
+<li>開源套件選擇要點<ul>
+<li>版本更新: 可以查看更新日期</li>
+<li>活躍程度：可以知道這個專案到底有沒有在維護</li>
+<li>商業支援：是否有付費版跟開源版，通常有付費版撐腰的比較好。</li>
+<li>留意授權問題(GPL,BSD, Apache…)</li>
+</ul>
+</li>
+<li>Open Hub - 開源專案安全檢測與授權建議</li>
+</ul>
+<h3 id="解密-HTTPS-雲端服務的美麗與哀愁-側錄-備份-防毒-稽核"><a href="#解密-HTTPS-雲端服務的美麗與哀愁-側錄-備份-防毒-稽核" class="headerlink" title="解密 HTTPS 雲端服務的美麗與哀愁: 側錄 / 備份 / 防毒 / 稽核"></a>解密 HTTPS 雲端服務的美麗與哀愁: 側錄 / 備份 / 防毒 / 稽核</h3><ul>
+<li>TLS提供了實質性的好處，但是卻也增加了分析流量的困難。</li>
+<li>部分國家是禁止對HTTPS做解密，因為會有隱私權問題。</li>
+<li>通常金融業是不能對HTTPS做解密，因為資料過度敏感。</li>
+<li>有些軟體例如Line或是Messenger，沒辦法做解密，因為這些程式只要發現憑證被改就會被擋掉。</li>
+</ul>
+<p><strong>心得:</strong> 大部分的HTTPS解密都是透過proxy來做到，client端裝agent來換掉憑證，然後proxy端做解密的動作，接著再由proxy去跟Web Server去做連線，這樣就可以取得HTTPS的內容。</p>
+<h2 id="廠商-只有部分"><a href="#廠商-只有部分" class="headerlink" title="廠商(只有部分)"></a>廠商(只有部分)</h2><p><strong>郵件過濾及郵件安全：</strong></p>
+<ul>
+<li>Proofpoint</li>
+</ul>
+<p><strong>郵件伺服器及郵件安全</strong></p>
+<ul>
+<li>Openfind</li>
+</ul>
+<p><strong>特權帳號監控管理</strong></p>
+<ul>
+<li>Cyberark</li>
+</ul>
+<p><strong>HTTPS流量管理監控(解密HTTPS)</strong></p>
+<ul>
+<li>L7Ntwork</li>
+<li>F5</li>
+</ul>
+<p><strong>雲端安全</strong></p>
+<ul>
+<li>Tufin</li>
+<li>F-Secure</li>
+</ul>
+<p><strong>透過DNS來防護</strong></p>
+<ul>
+<li>Cisco Umbrella</li>
+</ul>
+<p><strong>端點檔案加密(為重要檔案加密)</strong></p>
+<ul>
+<li>中華電信SecurBox</li>
+</ul>
+<p><strong>DDoS防護</strong></p>
+<ul>
+<li>威睿科技 GenieATM(透過設備將流量導到F5那些去做清洗，他們只做導向的動作而已)</li>
+<li>Arbor</li>
+<li>Akamai</li>
+</ul>
+<p><strong>Log管理</strong></p>
+<ul>
+<li>ALog</li>
+</ul>
+<p><strong>整合型安全風險管理平台</strong></p>
+<ul>
+<li>tenable</li>
+<li>IBM Security</li>
+</ul>
+<p><strong>Birdman新創公司</strong></p>
+<ul>
+<li>CYCARRIER</li>
+</ul>
+<h2 id="其餘學習"><a href="#其餘學習" class="headerlink" title="其餘學習"></a>其餘學習</h2><ol>
+<li>以往對付DDoS，廠商都是直接放一台自家設備在Gateway，當攻擊發生時設備將流量導向到Cloud Scrubbing Center去做清洗，但是這樣子對Client端還是有很大得負擔，因此發現今年許多處理DDoS的廠商，在Redirect的部分改用了BGP forwarding或是DNS Forwarding，直接在源頭就將流量導向到Scrubbing Center，這樣就不會增加Client的負擔。</li>
+<li>市面上大部分的IP Cam都是換湯不換藥，外殼是自己設計，但是晶片可能就採用大陸晶片，這種認證通常都很脆弱，只要使用一些現有的APP就可以掃到IP cam然後免認證登入，因此在買IP cam的時候，最好選擇有通過『 IP Camera 場域實驗室』認證的IP Cam。</li>
+<li>電影裡騙過管理者IP CAM畫面現實是做得到的，只要透過arp spoofing先去欺騙IP CAM管理器，這樣管理器就會以為駭客的電腦才是IP CAM，然後駭客再送假訊號(畫面正常的影片)給管理器，這樣管理器那邊就會一直看到是正常的畫面。</li>
+</ol>
+<div class="note info"><p>文章內容的轉載、重製、發佈，請註明出處: <a href="https://pohsienshih.github.io/">https://pohsienshih.github.io</a></p>
+</div>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/conference/" rel="tag"># conference</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/SSH-Tunnel-Introduction/" rel="prev" title="SSH Tunnel介紹">
+                  <i class="fa fa-chevron-left"></i> SSH Tunnel介紹
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/Enterprise-PKS-Introduction/" rel="next" title="Enterprise PKS介紹">
+                  Enterprise PKS介紹 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Pohsien Shih</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

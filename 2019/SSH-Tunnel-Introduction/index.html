@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-pohsien/favicon-32x32-pohsien.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-pohsien/favicon.ico">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"pohsienshih.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":true}};
+  </script>
+<meta name="description" content="由於最近碰到一些特殊網路情境必須使用到SSH Tunnel，因此花點時間複習了一下。SSH Tunnel是個非常好用的技術，可以在一些比較安全或封閉的網路將流量透過SSH Protocol傳輸出去。使用SSH Tunnel一定要準備一個與Client端不同網路的Remote Server當作跳板機，其原理類似Port Forwarding的概念，在Client以及Remote Server之間建立">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SSH Tunnel介紹">
+<meta property="og:url" content="https://pohsienshih.github.io/2019/SSH-Tunnel-Introduction/index.html">
+<meta property="og:site_name" content="Pohsien Workspace">
+<meta property="og:description" content="由於最近碰到一些特殊網路情境必須使用到SSH Tunnel，因此花點時間複習了一下。SSH Tunnel是個非常好用的技術，可以在一些比較安全或封閉的網路將流量透過SSH Protocol傳輸出去。使用SSH Tunnel一定要準備一個與Client端不同網路的Remote Server當作跳板機，其原理類似Port Forwarding的概念，在Client以及Remote Server之間建立">
+<meta property="og:locale">
+<meta property="og:image" content="https://i.imgur.com/QPeA33n.png">
+<meta property="og:image" content="https://i.imgur.com/bfl7hOx.png">
+<meta property="article:published_time" content="2019-05-22T16:23:25.000Z">
+<meta property="article:modified_time" content="2020-12-31T09:05:50.828Z">
+<meta property="article:author" content="Pohsien Shih">
+<meta property="article:tag" content="ssh">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/QPeA33n.png">
+
+
+<link rel="canonical" href="https://pohsienshih.github.io/2019/SSH-Tunnel-Introduction/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'default'
+  };
+</script>
+<title>SSH Tunnel介紹 | Pohsien Workspace</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-150934951-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-150934951-1');
+      }
+    </script>
+
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Pohsien Workspace</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Cloud Native, Network, Security, etc.</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Local-Tunnel"><span class="nav-number">1.</span> <span class="nav-text">Local Tunnel</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%83%85%E5%A2%831"><span class="nav-number">1.1.</span> <span class="nav-text">情境1</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%83%85%E5%A2%832"><span class="nav-number">1.2.</span> <span class="nav-text">情境2</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Remote-Tunnel"><span class="nav-number">2.</span> <span class="nav-text">Remote Tunnel</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80%E8%88%AC%E6%83%85%E5%A2%83"><span class="nav-number">2.1.</span> <span class="nav-text">一般情境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A8%AD%E5%AE%9A%E8%AE%93%E5%A4%96%E9%83%A8%E8%83%BD%E5%AD%98%E5%8F%96SSH-Tunnel"><span class="nav-number">2.2.</span> <span class="nav-text">設定讓外部能存取SSH Tunnel</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E9%98%B2%E6%AD%A2SSH-Tunnel"><span class="nav-number">3.</span> <span class="nav-text">如何防止SSH Tunnel</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%83%E8%80%83%E8%B3%87%E6%96%99"><span class="nav-number">4.</span> <span class="nav-text">參考資料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Pohsien Shih"
+      src="/images/pohsien.jpg">
+  <p class="site-author-name" itemprop="name">Pohsien Shih</p>
+  <div class="site-description" itemprop="description">System Engineer</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/pohsienshih" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;pohsienshih" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:pohsien324@gmail.com" title="E-Mail → mailto:pohsien324@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll site-overview-item animated">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      相關連結
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://k2r2bai.com/" title="https:&#x2F;&#x2F;k2r2bai.com&#x2F;" rel="noopener" target="_blank">凱仁大大</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.hwchiu.com/" title="https:&#x2F;&#x2F;www.hwchiu.com&#x2F;" rel="noopener" target="_blank">邱牛大大</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.pichuang.com.tw/" title="https:&#x2F;&#x2F;blog.pichuang.com.tw&#x2F;" rel="noopener" target="_blank">小飛機</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.facebook.com/groups/cloudnative.tw/" title="https:&#x2F;&#x2F;www.facebook.com&#x2F;groups&#x2F;cloudnative.tw&#x2F;" rel="noopener" target="_blank">CNTUG</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://yylin1.github.io/" title="https:&#x2F;&#x2F;yylin1.github.io&#x2F;" rel="noopener" target="_blank">義洋</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://medium.com/@b02310043" title="https:&#x2F;&#x2F;medium.com&#x2F;@b02310043" rel="noopener" target="_blank">莫阿兆</a>
+        </li>
+    </ul>
+  </div>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="default">
+    <link itemprop="mainEntityOfPage" href="https://pohsienshih.github.io/2019/SSH-Tunnel-Introduction/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/pohsien.jpg">
+      <meta itemprop="name" content="Pohsien Shih">
+      <meta itemprop="description" content="System Engineer">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Pohsien Workspace">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          SSH Tunnel介紹
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-05-23 00:23:25" itemprop="dateCreated datePublished" datetime="2019-05-23T00:23:25+08:00">2019-05-23</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2020-12-31 17:05:50" itemprop="dateModified" datetime="2020-12-31T17:05:50+08:00">2020-12-31</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>由於最近碰到一些特殊網路情境必須使用到SSH Tunnel，因此花點時間複習了一下。SSH Tunnel是個非常好用的技術，可以在一些比較安全或封閉的網路將流量透過SSH Protocol傳輸出去。使用SSH Tunnel一定要準備一個與Client端不同網路的Remote Server當作跳板機，其原理類似<code>Port Forwarding</code>的概念，在Client以及Remote Server之間建立一個SSH Tunnel，然後將特定的服務全部透過這個Tunnel來傳送，就可以達到加密及穿透的效果。</p>
+<p>SSH Tunnel又可分成兩種: </p>
+<ul>
+<li>Local Tunnel (又稱SSH Local Forwarding)</li>
+<li>Remote Tunnel (又稱SSH Remote Forwarding)</li>
+</ul>
+<p>這兩種差別其實就是要從哪一端將流量透過SSH Tunnel傳送出去，一個是從local端傳送給Remote端，一個是從Remote傳回來給local。接下來會針對這兩種Tunnel做細部解釋以及適用的情境。</p>
+<a id="more"></a>
+<h2 id="Local-Tunnel"><a href="#Local-Tunnel" class="headerlink" title="Local Tunnel"></a>Local Tunnel</h2><p>Local Tunnel主要是從Local端(Client端)，將Client端特定服務的流量透過SSH傳給Remote Server，再透過Remote Server傳出去給Application Server。其使用的情境可以分成兩種：一種是想要連到特定的服務，但是卻不想被網管監測到流量，就可以使用SSH來傳送流量出去，這樣網管只能看到SSH加密的流量，沒辦法看到內容。另一種是公司防火牆有限制員工不能連到特定服務或網站，也可以將流量包到SSH裡面來繞過防火牆出去(前提是防火牆沒有檔SSH服務)。</p>
+<p>指令(此指令需在Client端執行)：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ ssh -NfL &lt;<span class="built_in">local</span> listening IP&gt;:&lt;<span class="built_in">local</span> listening port&gt;:&lt;application ip&gt;:&lt;application port&gt; &lt;Remote Server&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># Example</span></span><br><span class="line">$ ssh -NfL localhost:1234:&lt;web server ip&gt;:80 user@&lt;remote server ip&gt;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>-N 代表不要開起shell code模式<br>-f 代表在背景執行<br>-L 代表Local Tunnel<br><code>&lt;local listening IP&gt;</code> 要在Client上監聽的IP。<br><code>&lt;local listening port&gt;</code> 要在Client上監聽的Port，可自行定義。<br><code>&lt;application ip&gt;</code> 要存取的服務IP<br><code>&lt;application port&gt;</code> 要存取的服務port</p>
+</blockquote>
+<p>這邊意思是假如Client上有任何Request要傳送到<code>&lt;local listening IP&gt;:&lt;local listening port&gt;</code>，Client就會將他轉送到SSH Tunnel來傳給Remote Server，Remote Server收到流量後，會把封包轉送到<code>&lt;application ip&gt;:&lt;application port&gt;</code>，因此從Client端到Remote Server端之間的路是透過SSH傳送的(加密連線)。</p>
+<figure class="highlight brainfuck"><table><tr><td class="code"><pre><span class="line"><span class="comment">Client</span> &lt;--<span class="comment">SSH</span> <span class="comment">Tunnel</span>--&gt; <span class="comment">Remote</span> <span class="comment">Server</span> &lt;--<span class="comment">Internet</span>--&gt; <span class="comment">Application</span> <span class="comment">Server</span></span><br></pre></td></tr></table></figure>
+<div class="note warning"><p> 請注意這邊的<code>&lt;local listening  port&gt;</code>跟<code>&lt;application port&gt;</code>與SSH服務使用到的Port完全沒有任何關係，預設SSH Server使用的Port還是22，然後Client端是亂數產生。如果Remote Server的SSH Port不是22的話，那就必須在指令後面加上 <code>-p &lt;port number&gt;</code> </p>
+<p>Example:<br><code>ssh -NfL localhost:1234:&lt;web server ip&gt;:80 user@&lt;remote server ip&gt; -p 3000</code></p>
+</div>
+
+<div class="note warning"><p>這邊需要注意的是<code>&lt;local listening IP&gt;</code>可以打也可以不打，預設是localhost(127.0.0.1)，如果要監聽在不同的IP，需要針對sshd_config做設定，在稍後會做說明。</p>
+</div>
+
+<h3 id="情境1"><a href="#情境1" class="headerlink" title="情境1"></a>情境1</h3><p>想要在公司使用ptt(<code>ssh bbsu@ptt.cc</code>)，但是不想被網管發現。<br><strong>角色:</strong></p>
+<ol>
+<li>Client: 公司個人電腦or筆電，需要可以使用SSH指令。</li>
+<li>Remote Server: 當作跳板的機器，需要有SSH Server服務，且必須位於公司網路之外。Client必須連得到它。</li>
+<li>ptt.cc: 要連線的Application Server。</li>
+</ol>
+<p><strong>Step</strong></p>
+<ol>
+<li><p>在Client上Console執行Local Tunnel。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ ssh -NfL 1234:ppt.cc:23 &lt;Remote Server&gt;</span><br></pre></td></tr></table></figure>
+<p> <img src="https://i.imgur.com/QPeA33n.png"></p>
+</li>
+<li><p>在Client端檢查是否有成功建立起Tunnel</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ netstat -plnt </span><br><span class="line">$ ps -ef | grep ssh</span><br></pre></td></tr></table></figure></li>
+<li><p>接下來就可以透過Client連到ptt</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ ssh bbsu@localhost -p 1234</span><br></pre></td></tr></table></figure>
+<p> <img src="https://i.imgur.com/bfl7hOx.png"></p>
+</li>
+<li><p>如果要關掉Tunnel，只需要在Client上面執行以下指令：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ ps -ef | grep ssh</span><br><span class="line">$ <span class="built_in">kill</span> &lt;ssh tunnel 那條服務的PID&gt;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<p><strong>說明</strong><br>在這個情境中，當Client收到要通往<code>localhost:1234</code>的Request時，就會將它丟到SSH Tunnel傳送給Remote Server，Remote Server收到後再把它丟到<code>ptt.cc:22</code>，當封包回來也是一樣，只是就反過來，Remote Sever將Response透過SSH Tunnel丟回給Client，Client再將封包從SSH Tunnel丟給1234 port。</p>
+<h3 id="情境2"><a href="#情境2" class="headerlink" title="情境2"></a>情境2</h3><p>公司防火牆擋掉xxx網站，要如何才能繞過防火牆連到網站<br><strong>角色:</strong></p>
+<ol>
+<li>Client: 公司個人電腦or筆電，需要可以使用SSH指令。</li>
+<li>Remote Server: 當作跳板的機器，需要有SSH Server服務，且必須位於公司網路之外，Client必須連得到它。</li>
+<li>Web Server: 要連線的Application Server。</li>
+</ol>
+<p><strong>Step</strong></p>
+<ol>
+<li>在Client上Console執行Local Tunnel。<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ ssh -NfL 80:&lt;web server&gt;:80  &lt;Remote Server User&gt;@&lt;Remote Server IP&gt;</span><br></pre></td></tr></table></figure></li>
+<li>在Client端檢查是否有成功建立起Tunnel<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ netstat -plnt </span><br><span class="line">$ ps -ef | grep ssh</span><br></pre></td></tr></table></figure></li>
+<li>接下來就可以透過Client上的瀏覽器連到網站(輸入<code>http://localhost</code>)<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment">#除了瀏覽器之外，也可以使用curl測試</span></span><br><span class="line">$ curl http://localhost</span><br></pre></td></tr></table></figure></li>
+<li>如果要關掉Tunnel，只需要在Client上面執行以下指令：<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ ps -ef | grep ssh</span><br><span class="line">$ <span class="built_in">kill</span> &lt;ssh tunnel 那條服務的PID&gt;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<p><strong>說明</strong><br>在這個情境中，當Client收到要通往<code>localhost:80</code>的Request時，就會將它丟到SSH Tunnel傳送給Remote Server，Remote Server收到後再把它丟到<code>&lt;web server&gt;:80</code>，封包回來得時候也是一樣，只是順序反過來。</p>
+<p>這邊需要注意的是，如果是要Redirect 443 port，可能會因為憑證被換掉而導致憑證錯誤，因此這種情境不太建議使用在有TLS加密的Web Server，純粹拿來測試就好。另外如果Web Server是在Load Balancer後面，那這樣可能也會導致Local Tunnel無法成功，這邊不太確定為什麼，有可能是因為導到後面後，IP就不是原本設定Tunnel的那個Web Server IP，因此流量就不會正常的走SSH Tunnel。</p>
+<h2 id="Remote-Tunnel"><a href="#Remote-Tunnel" class="headerlink" title="Remote Tunnel"></a>Remote Tunnel</h2><p>Remote Tunnel是我比較常用的Tunnel方式，因為可以達到類似於VPN的功能，來存取內網的服務，可以應用在很多種情境上。Remote Tunnel是指從Remote端(Remote Server端)，將特定服務的流量透過SSH傳回給Client端上的服務。</p>
+<p>指令(此指令需在Client上執行)：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ ssh -NfR &lt;remote listening IP&gt;:&lt;remote listening port&gt;:&lt;client listening ip&gt;:&lt;client listening port&gt; &lt;Remote Server&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># Example</span></span><br><span class="line">$ ssh -NfR localhost:1234:localhost:80 user@&lt;remote server ip&gt;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>-N 代表不要開起shell code模式<br>-f 代表在背景執行<br>-R 代表Remote Tunnel<br><code>&lt;remote listening IP&gt;</code> 要在Remote Server上監聽的IP<br><code>&lt;remote listening port&gt;</code> 要在Remote Server上監聽的Port，可自行定義。<br><code>&lt;client listening ip&gt;</code> Client上面服務監聽的IP<br><code>&lt;client listening port&gt;</code> Client上面服務port</p>
+</blockquote>
+<p>這段指令意思是任何送到Remote Server上<code>&lt;remote listening IP&gt;:&lt;remote listening port&gt;</code>的Request，Remote Server都會將他透過SSH Tunnel傳送到給Client，Client再將Request丟給自己的<code>&lt;client listening ip&gt;:&lt;client listening port&gt;</code>服務。</p>
+<figure class="highlight brainfuck"><table><tr><td class="code"><pre><span class="line"><span class="comment">外部主機</span> --<span class="comment">SSH</span>--&gt; <span class="comment">Remote</span> <span class="comment">Server</span> &lt;--<span class="comment">SSH</span> <span class="comment">Tunnel</span>--&gt; <span class="comment">Client</span></span><br></pre></td></tr></table></figure>
+<div class="note warning"><p>請注意這邊的<code>&lt;remote listening  port&gt;</code>跟<code>&lt;client listening port&gt;</code>與SSH服務使用到的Port完全沒有任何關係，預設SSH Server使用的Port還是22，然後Client端是亂數產生。如果Remote Server的SSH Port不是22的話，那就必須在指令後面加上 <code>-p &lt;port number&gt;</code> </p>
+<p> Example:<br> <code>ssh -NfR localhost:1234:localhost:80 user@&lt;remote server ip&gt; -p 3000</code></p>
+</div>
+
+<div class="note warning"><p>這邊需要注意的是<code>&lt;remote listening IP&gt;</code>可以打也可以不打，預設是localhost(127.0.0.1)，如果要監聽在不同的IP，需要針對sshd_config做設定，在稍後會做說明。</p>
+</div>
+
+<h3 id="一般情境"><a href="#一般情境" class="headerlink" title="一般情境"></a>一般情境</h3><p>公司的PC是在內網裡面，且是虛擬IP，有沒有辦法不透過VPN，從公司外面SSH連回來自己的PC？<br>or<br>公司的防火牆擋掉外對內的連線，因此沒辦法從外部透過SSH連回公司裡自己建置的SSH Server，是否有辦法不透過VPN，從公司外面SSH連回來SSH Server？</p>
+<p><strong>角色:</strong></p>
+<ol>
+<li>Client: 公司內部的主機，也就是希望能從公司外部透過SSH連回的SSH Server，需要可以使用SSH指令。</li>
+<li>Remote Server: 當作跳板的機器，需要有SSH Server服務，且必須位於公司網路之外，Client要能連得到它。</li>
+<li>外部電腦: 位於公司外部的電腦，必須能連得到Remote Server。</li>
+</ol>
+<p><strong>Step</strong></p>
+<ol>
+<li><p>在Client端執行Remote SSH Tunnel。 </p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ ssh -NfR 1234:localhost:22  &lt;Remote Server User&gt;@&lt;Remote Server IP&gt;</span><br></pre></td></tr></table></figure></li>
+<li><p>在Remote Server端以及Client端檢查是否有成功建立起Tunnel</p>
+<p> Client</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ps -ef | grep ssh</span><br></pre></td></tr></table></figure>
+<p> Remote Server</p>
+ <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">netstat -plnt </span><br></pre></td></tr></table></figure></li>
+<li><p>接下來先透過外部電腦連到Remote Server。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 在外部電腦上執行</span></span><br><span class="line">$ ssh &lt;Remote Server User&gt;@&lt;Remote Server IP&gt;</span><br></pre></td></tr></table></figure></li>
+<li><p>透過Remote Server反向連回Client。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 在Remote Server上執行</span></span><br><span class="line">$ ssh localhost -p 1234</span><br></pre></td></tr></table></figure></li>
+<li><p>如果要關掉Tunnel，只需要在Client上面執行以下指令：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ ps -ef | grep ssh</span><br><span class="line">$ <span class="built_in">kill</span> &lt;ssh tunnel 那條服務的PID&gt;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<p><strong>說明</strong><br>在這個情境中，主要是先在Client開啟Remote Tunnel，然後Remote Tunnel會在Remote Server上監聽1234 port，當有Request從1234 port來的話，Remote Server就會透過SSH轉送回Client，Client收到後再將這個Request轉送給自己的22 Port。</p>
+<h3 id="設定讓外部能存取SSH-Tunnel"><a href="#設定讓外部能存取SSH-Tunnel" class="headerlink" title="設定讓外部能存取SSH Tunnel"></a>設定讓外部能存取SSH Tunnel</h3><p>預設SSH Tunnel是不能監聽在localhost以外的IP，因此每次使用Remote Tunnel就一定要先連到Remote Server才能反連回去，這樣不太方便，因此我們可以在SSH Server上面允許SSH Tunnel可以監聽在其他Port。</p>
+<ol>
+<li>到Remote Server上開啟<code>sshd_config</code><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ vim /etc/ssh/sshd_config</span><br></pre></td></tr></table></figure></li>
+<li>找到GatewayPorts選項並設成yes，如果沒有這個選項可以自己加上去。<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">GatewayPorts yes</span><br></pre></td></tr></table></figure></li>
+<li>重啟SSH服務<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ systemctl restart sshd.service</span><br></pre></td></tr></table></figure></li>
+<li>這樣就可以將SSH Tunnel監聽在任何IP上<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Local Tunnel</span></span><br><span class="line">$ ssh -NfL 0.0.0.0:1234:&lt;web server ip&gt;:80 user@&lt;remote server ip&gt;</span><br><span class="line">$ ssh -NfL xx.xx.xx.xx:1234:&lt;web server ip&gt;:80 user@&lt;remote server ip&gt;</span><br><span class="line">...</span><br><span class="line"></span><br><span class="line"><span class="comment"># Remote Tunnel</span></span><br><span class="line">$ ssh -NfR 0.0.0.0:1234:localhost:80 user@&lt;remote server ip&gt;</span><br><span class="line">$ ssh -NfR xx.xx.xx.xx:1234:localhost:80 user@&lt;remote server ip&gt;</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+設定外部能存取後，就可以結合各式各樣的應用，例如：</li>
+</ol>
+<p><strong>Reverse Proxy</strong><br>透過Remote Server反向連回公司PC上的Web Server。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ ssh -NfR 0.0.0.0:80:localhost:80 user@&lt;remote server ip&gt;</span><br></pre></td></tr></table></figure>
+<p>如此一來不需要連到Remote Server，只要在任何能存取到Remote Server的主機使用瀏覽器連<code>http://&lt;remote server ip&gt;</code>或是執行<code>curl http://&lt;remote server ip&gt;</code>就可以連到公司的web server。</p>
+<p><strong>RDP</strong><br>透過Remote Server反向連回公司PC上的遠端桌面服務。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ ssh -NfR 0.0.0.0:3389:localhost:3389 user@&lt;remote server ip&gt;</span><br></pre></td></tr></table></figure>
+<p>如此一來不需要連到Remote Server，只要在任何能存取到Remote Server的主機上使用遠端桌面連到<code>&lt;remote server ip&gt;:3389</code>，就可反向連到公司PC上的遠端桌面服務。</p>
+<div class="note primary"><p>這邊都只有使用Remote Tunnel來當作範例，但是其實Local Tunnel也可以把<code>&lt;local listening IP&gt;</code>設定成監聽任何IP，只是目前比較少碰到需要把Local Tunnel開放外部存取這種情況，因此這裡就不特別闡述，有興趣可以自行測試看看。</p>
+</div>
+
+<h2 id="如何防止SSH-Tunnel"><a href="#如何防止SSH-Tunnel" class="headerlink" title="如何防止SSH Tunnel"></a>如何防止SSH Tunnel</h2><p>SSH Tunnel防範的方法有很多，這邊目前先列出幾種比較常聽到的，之後如果還有學習到別的方法再補充上來。</p>
+<ol>
+<li>SSH Server關閉SSH Tunnel服務，開啟<code>sshd_config</code>設定<code>AllowTcpForwarding no</code>。這樣可以防止別人用你的SSH Server當SSH Tunnel跳板機。</li>
+<li>在防火牆直接擋掉SSH服務，不管內對外，外對內都擋。(曾經真的有遇到類似的案例，只是是限制特定的主機，例如給guest使用的或是一些非資訊技術相關的End User用的，並不是真的全公司的主機都擋)。</li>
+<li>使用一些端點安全防護的產品直接禁止客戶使用SSH Tunnel指令或是SIEM產品去trace哪個使用者使用了Tunnel。</li>
+</ol>
+<h2 id="參考資料"><a href="#參考資料" class="headerlink" title="參考資料"></a>參考資料</h2><ol>
+<li>SSH Tunnel - Local and Remote Port Forwarding Explained With Examples - <a target="_blank" rel="noopener" href="https://blog.trackets.com/2014/05/17/ssh-tunnel-local-and-remote-port-forwarding-explained-with-examples.html">https://blog.trackets.com/2014/05/17/ssh-tunnel-local-and-remote-port-forwarding-explained-with-examples.html</a></li>
+<li>How to make ssh tunnel open to public? - <a target="_blank" rel="noopener" href="https://superuser.com/questions/588591/how-to-make-ssh-tunnel-open-to-public">https://superuser.com/questions/588591/how-to-make-ssh-tunnel-open-to-public</a></li>
+<li>Securing Your SSH Server - <a target="_blank" rel="noopener" href="http://download.asperasoft.com/download/docs/proxy/1.4.0/admin_linux/webhelp/dita/securing_ssh_server.html">http://download.asperasoft.com/download/docs/proxy/1.4.0/admin_linux/webhelp/dita/securing_ssh_server.html</a></li>
+</ol>
+<div class="note info"><p>文章內容的轉載、重製、發佈，請註明出處: <a href="https://pohsienshih.github.io/">https://pohsienshih.github.io</a></p>
+</div>
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ssh/" rel="tag"># ssh</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/2019-iThome-Cyber-Sec-Notes/" rel="next" title="2019 iThome資安大會筆記">
+                  2019 iThome資安大會筆記 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Pohsien Shih</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
